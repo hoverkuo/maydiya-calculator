@@ -1,0 +1,1344 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#163f38">
+  <meta name="description" content="美帝亞珠寶成本工具，即時計算商品成本、電視台請款金額、淨賺與毛利率。">
+  <title>售價與利潤計算器｜美帝亞珠寶</title>
+  <style>
+:root {
+  color-scheme:light;
+  --ink:#223d36;
+  --muted:#6f7772;
+  --green:#163f38;
+  --gold:#aa8550;
+  --line:#e3e5dc;
+  --red:#b74432;
+  --paper:#faf9f5;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  color:var(--ink);
+  background:var(--paper);
+  font-synthesis:none;
+}
+
+* {
+  box-sizing:border-box;
+}
+
+body {
+  margin:0;
+}
+
+button,input,select {
+  font:inherit;
+}
+
+button,a,input,summary {
+  -webkit-tap-highlight-color:transparent;
+}
+
+button,summary {
+  cursor:pointer;
+}
+
+button,input,select,summary,a {
+  outline-offset:5px;
+}
+
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible {
+  outline:3px solid #af8b4e;
+}
+
+a {
+  color:inherit;
+}
+
+.site-header {
+  max-width:1200px;
+  margin:auto;
+  padding:27px 48px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:1px solid var(--line);
+}
+
+.brand {
+  display:flex;
+  gap:12px;
+  align-items:center;
+  text-decoration:none;
+  font-size:19px;
+  letter-spacing:3px;
+  font-weight:600;
+}
+
+.brand svg {
+  width:38px;
+  height:38px;
+  color:var(--gold);
+}
+
+.brand small {
+  display:block;
+  font-size:9px;
+  letter-spacing:2.5px;
+  font-weight:500;
+  margin-top:6px;
+}
+
+.header-note {
+  font-size:12px;
+  color:var(--muted);
+}
+
+.header-note span {
+  padding:0 12px;
+  color:#b4b7ae;
+}
+
+main {
+  max-width:1100px;
+  margin:auto;
+  padding:51px 48px 24px;
+}
+
+.intro {
+  margin-bottom:32px;
+}
+
+h1 {
+  font-size:clamp(27px,4vw,36px);
+  font-weight:600;
+  letter-spacing:1px;
+  margin:0 0 13px;
+}
+
+
+.panel {
+  background:white;
+  border:1px solid var(--line);
+  border-radius:14px;
+}
+
+.input-panel {
+  padding:28px 30px;
+}
+
+h2 {
+  font-size:17px;
+  font-weight:600;
+  margin:0;
+  line-height:1.6;
+}
+
+.section-help {
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.8;
+  margin:10px 0 20px;
+}
+
+.field {
+  margin-bottom:16px;
+  min-width:0;
+}
+
+label {
+  display:block;
+  font-size:13px;
+  margin-bottom:9px;
+  line-height:1.5;
+}
+
+.input-wrap {
+  display:flex;
+  align-items:center;
+  border:1px solid #d9ddd5;
+  border-radius:7px;
+  min-height:49px;
+  background:#fff;
+  transition:border-color .15s,box-shadow .15s;
+}
+
+.input-wrap:focus-within {
+  border-color:#53796a;
+  box-shadow:0 0 0 3px #163f380b;
+}
+
+.input-wrap:has([aria-invalid="true"]) {
+  border-color:var(--red);
+}
+
+.input-wrap>span {
+  color:#858d85;
+  font-size:12px;
+  padding-left:13px;
+  flex:none;
+}
+
+input {
+  width:100%;
+  min-width:0;
+  border:0;
+  background:transparent;
+  color:var(--ink);
+  font-size:16px;
+  padding:13px 12px;
+  font-variant-numeric:tabular-nums;
+  border-radius:7px;
+}
+
+input:focus-visible {
+  outline:none;
+}
+
+input::placeholder {
+  color:#a0a69f;
+  font-size:14px;
+}
+
+.error:empty {
+  display:none;
+}
+
+.error {
+  color:var(--red);
+  font-size:12px;
+  line-height:1.6;
+  margin:7px 0 0;
+}
+
+.form-actions {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-top:1px solid var(--line);
+  padding-top:21px;
+  margin-top:10px;
+}
+
+button {
+  border:1px solid #d5ddd3;
+  background:#f4f6f0;
+  color:var(--green);
+  border-radius:6px;
+  padding:11px 16px;
+  font-size:13px;
+  min-height:44px;
+}
+
+button:hover {
+  background:#e8ede3;
+}
+
+.text-button {
+  border:0;
+  background:transparent;
+  color:var(--muted);
+  padding-right:0;
+}
+
+.text-button:hover {
+  background:transparent;
+  color:var(--green);
+}
+
+.result-column {
+  display:grid;
+  gap:20px;
+}
+
+.result-panel {
+  border-radius:14px;
+  background:var(--green);
+  color:#f7f7ee;
+  padding:27px 29px 22px;
+}
+
+.result-heading {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:25px;
+}
+
+.live-indicator {
+  font-size:11px;
+  color:#c0d0c3;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.live-indicator:before {
+  content:"";
+  width:5px;
+  height:5px;
+  background:#c3c99e;
+  border-radius:50%;
+}
+
+.result-footnote {
+  font-size:11px;
+  line-height:1.8;
+  color:#bccdc1;
+  margin:17px 0 0;
+}
+
+output {
+  font-variant-numeric:tabular-nums;
+  overflow-wrap:anywhere;
+}
+
+.target-panel {
+  padding:24px 28px;
+}
+
+.target-panel h2 {
+  font-size:15px;
+}
+
+.formula-panel {
+  margin-top:24px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#f4f4ed;
+  font-size:12px;
+}
+
+.formula-panel summary {
+  padding:16px 20px;
+  min-height:48px;
+}
+
+.formula-content {
+  padding:0 20px 14px;
+  line-height:1.9;
+  color:var(--muted);
+}
+
+.formula-content p {
+  margin:8px 0;
+}
+
+footer {
+  text-align:center;
+  font-size:11px;
+  color:var(--muted);
+  padding:28px 0 10px;
+  line-height:1.8;
+}
+
+
+@media(max-width:720px) {
+  .site-header {
+    padding:21px 22px;
+  }
+  .brand {
+    font-size:16px;
+    letter-spacing:2px;
+  }
+  .brand svg {
+    width:32px;
+    height:32px;
+  }
+  .header-note {
+    font-size:11px;
+  }
+  .header-note span {
+    padding:0 3px;
+  }
+  main {
+    padding:32px 20px 18px;
+  }
+  .intro {
+    margin-bottom:25px;
+  }
+  .input-panel {
+    padding:24px;
+  }
+  .result-panel {
+    padding:25px;
+  }
+  .target-panel {
+    padding:24px;
+  }
+  .formula-panel {
+    margin-top:18px;
+  }
+}
+
+@media(max-width:360px) {
+  .header-note {
+    display:none;
+  }
+  main {
+    padding-left:14px;
+    padding-right:14px;
+  }
+  .input-panel,.result-panel,.target-panel {
+    padding:21px;
+  }
+}
+
+select {
+  font:inherit;
+  color:var(--green);
+  background:#fff;
+  border:1px solid #d9ddd5;
+  border-radius:7px;
+  min-height:44px;
+  padding:6px;
+}
+.cost-controls {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto minmax(90px,auto);
+  align-items:center;
+  gap:8px;
+}
+.cost-controls.fixed-currency {
+  grid-template-columns:minmax(0,1fr) minmax(90px,auto);
+}
+.cost-detail-controls {
+  display:grid;
+  gap:8px;
+}
+[hidden] {
+  display:none !important;
+}
+.site-header {
+  padding-block:14px;
+}
+main {
+  padding-top:20px;
+}
+.intro {
+  margin-bottom:14px;
+}
+h1 {
+  margin-bottom:0;
+  font-size:clamp(24px,3vw,30px);
+}
+.calculator-pages {
+  display:flex;
+  gap:8px;
+  margin-bottom:12px;
+}
+.calculator-pages button[aria-current="page"],
+.primary-button {
+  background:var(--green);
+  color:white;
+  border-color:var(--green);
+}
+.calculator-pages button[aria-current="page"]:hover,
+.primary-button:hover {
+  background:#24564d;
+}
+#inputs-page {
+  padding:clamp(14px,2vw,24px);
+}
+#inputs-page h3 {
+  font-size:15px;
+  margin:12px 0 8px;
+}
+.pricing-fields, .cost-groups, .additional-costs {
+  display:grid;
+  gap:8px 12px;
+}
+.pricing-fields, .cost-groups {
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+.pricing-fields {
+  margin-top:10px;
+}
+.additional-costs {
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  margin-top:12px;
+}
+#inputs-page .field {
+  margin-bottom:0;
+}
+#inputs-page label {
+  margin-bottom:4px;
+}
+#inputs-page .input-wrap, #inputs-page select {
+  min-height:38px;
+}
+#inputs-page input {
+  padding:8px 7px;
+}
+#inputs-page input::placeholder {
+  font-size:12px;
+}
+#inputs-page .cost-controls {
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:4px;
+}
+#inputs-page .cost-controls.fixed-currency {
+  grid-template-columns:minmax(0,1fr);
+}
+.cost-group {
+  min-width:0;
+  padding:8px;
+  border:1px solid var(--line);
+  border-radius:8px;
+}
+.cost-group summary {
+  font-size:14px;
+  font-weight:600;
+  padding:2px 0 5px;
+}
+.cost-group .cost-field {
+  display:grid;
+  grid-template-columns:1em minmax(0,1fr);
+  align-items:center;
+  gap:0 4px;
+  margin-top:4px;
+}
+#inputs-page .cost-group label {
+  margin:0;
+  color:var(--muted);
+}
+.cost-group .error {
+  grid-column:2;
+  margin-top:3px;
+}
+.cost-detail-controls {
+  grid-template-columns:minmax(0,1fr) minmax(108px,1fr);
+  gap:4px;
+}
+#inputs-page .formula-panel {
+  margin-top:10px;
+}
+#inputs-page .formula-panel summary {
+  min-height:36px;
+  padding:9px 12px;
+}
+#inputs-page .formula-content .field {
+  margin-bottom:8px;
+}
+.form-actions {
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:10px;
+  padding-top:10px;
+}
+.cost-total {
+  font-size:14px;
+  font-weight:600;
+}
+.cost-total output {
+  margin-left:8px;
+}
+.form-buttons {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.result-column {
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:start;
+}
+.cost-breakdown {
+  grid-column:1 / -1;
+}
+.cost-breakdown {
+  padding:14px 18px;
+}
+.cost-breakdown summary {
+  font-size:14px;
+  font-weight:600;
+}
+@media(max-width:940px) {
+  .additional-costs {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+@media(max-width:850px) {
+  .cost-groups, .result-column {
+    grid-template-columns:1fr;
+  }
+}
+@media(max-width:500px) {
+  .pricing-fields, .additional-costs {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .pricing-fields .field:first-child {
+    grid-column:1 / -1;
+  }
+  .form-buttons {
+    width:100%;
+  }
+}
+.formula-rows {
+  margin:16px 0 0;
+}
+.formula-rows > div {
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:12px;
+  border-top:1px solid var(--line);
+  padding:12px 0;
+}
+.formula-rows dt {
+  font-size:14px;
+}
+.formula-rows small {
+  display:block;
+  font-size:11px;
+  line-height:1.6;
+  color:var(--muted);
+  margin-top:4px;
+}
+.formula-rows dd {
+  margin:0;
+  text-align:right;
+}
+.result-panel .formula-rows > div {
+  border-color:#ffffff24;
+}
+.result-panel .formula-rows small {
+  color:#bccdc1;
+}
+#profit, #margin {
+  font-size:22px;
+}
+#profit[data-loss="true"] {
+  color:#ffcbab;
+}
+.result-footnote:empty {
+  display:none;
+}
+
+.results-toolbar {
+  grid-column:1 / -1;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:12px;
+}
+.export-actions {
+  display:flex;
+  gap:8px;
+}
+#print-report {
+  display:none;
+}
+@media print {
+  @page { size:A4 portrait; margin:13mm; }
+  body { background:white; color:#111; }
+  body > :not(#print-report) { display:none !important; }
+  #print-report { display:block; font-size:9pt; }
+  #print-report h1 { font-size:16pt; margin:0 0 8px; }
+  #print-report table { width:100%; border-collapse:collapse; table-layout:fixed; }
+  #print-report col:first-child { width:23%; }
+  #print-report col:nth-child(2) { width:31%; }
+  #print-report col:nth-child(3) { width:12%; }
+  #print-report col:nth-child(4) { width:18%; }
+  #print-report th, #print-report td {
+    border-bottom:1px solid #ddd;
+    padding:3px 5px;
+    overflow-wrap:anywhere;
+    text-align:left;
+  }
+  #print-report tr { break-inside:avoid; }
+  #print-report td:nth-child(n+4) { text-align:right; }
+  #print-report tr.report-section th { border-top:1px solid #777; font-weight:700; }
+}
+</style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="maydiya-calculator.html" aria-label="美帝亞珠寶首頁">
+      <svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M10 8h20l7 11-17 17L3 19 10 8Z M3 19h34 M10 8l10 28L30 8 M10 8l10 11L30 8" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+      <span>美帝亞珠寶<small>MAYDIYA JEWELRY</small></span>
+    </a>
+    <span class="header-note">營運工具 <span aria-hidden="true">／</span> 售價試算</span>
+  </header>
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <h1 id="page-title">售價與利潤計算器</h1>
+    </section>
+    <form id="calculator" novalidate autocomplete="off">
+      <nav class="calculator-pages" aria-label="試算頁面">
+        <button type="button" id="inputs-button" aria-controls="inputs-page" aria-current="page">1. 輸入資料</button>
+        <button type="button" id="results-button" aria-controls="results-page">2. 試算結果</button>
+      </nav>
+      <section class="panel input-panel" id="inputs-page" aria-labelledby="inputs-title">
+        <h2 id="inputs-title" tabindex="-1">輸入資料</h2>
+        <div class="pricing-fields">
+          <div class="field">
+            <label for="exchangeRate">人民幣兌新臺幣匯率</label>
+            <div class="input-wrap"><span aria-hidden="true">TWD / CNY</span><input id="exchangeRate" name="exchangeRate" inputmode="decimal" placeholder="" value="4.7" aria-describedby="exchangeRate-error"></div>
+            <p class="error" id="exchangeRate-error"></p>
+          </div>
+          <div class="field">
+            <label for="salePrice">零售價</label>
+            <div class="input-wrap"><span aria-hidden="true">NT$</span><input id="salePrice" name="salePrice" inputmode="decimal" placeholder="例如 29,800" aria-describedby="salePrice-error"></div>
+            <p class="error" id="salePrice-error"></p>
+          </div>
+          <div class="field">
+            <label for="commissionRate">東森抽成率</label>
+            <div class="input-wrap"><span aria-hidden="true">%</span><input id="commissionRate" name="commissionRate" inputmode="decimal" value="50" aria-describedby="commissionRate-error"></div>
+            <p class="error" id="commissionRate-error"></p>
+          </div>
+        </div>
+        <h3>商品成本</h3>
+        <div class="cost-groups">
+          <details class="cost-group" open>
+            <summary>主石</summary>
+            <div class="field cost-field">
+              <label for="purchaseCost" aria-label="主石 1 金額">1</label>
+              <div class="cost-detail-controls">
+                <div class="input-wrap"><input id="purchaseCostDescription" name="purchaseCostDescription" type="text" placeholder="品項說明" aria-label="主石 1 說明"></div>
+                <div class="cost-controls">
+                  <div class="input-wrap"><input id="purchaseCost" name="purchaseCost" inputmode="decimal" placeholder="金額" aria-label="主石 1 金額" aria-describedby="purchaseCost-error"></div>
+                  <select name="purchaseCostCurrency" aria-label="主石 1 幣別"><option value="CNY">CNY</option><option value="TWD">TWD</option></select>
+                </div>
+              </div>
+              <p class="error" id="purchaseCost-error"></p>
+            </div>
+            <div class="field cost-field">
+              <label for="purchaseCost2" aria-label="主石 2 金額">2</label>
+              <div class="cost-detail-controls">
+                <div class="input-wrap"><input id="purchaseCost2Description" name="purchaseCost2Description" type="text" placeholder="品項說明" aria-label="主石 2 說明"></div>
+                <div class="cost-controls">
+                  <div class="input-wrap"><input id="purchaseCost2" name="purchaseCost2" inputmode="decimal" placeholder="金額" aria-label="主石 2 金額" aria-describedby="purchaseCost2-error"></div>
+                  <select name="purchaseCost2Currency" aria-label="主石 2 幣別"><option value="CNY">CNY</option><option value="TWD">TWD</option></select>
+                </div>
+              </div>
+              <p class="error" id="purchaseCost2-error"></p>
+            </div>
+            <div class="field cost-field">
+              <label for="purchaseCost3" aria-label="主石 3 金額">3</label>
+              <div class="cost-detail-controls">
+                <div class="input-wrap"><input id="purchaseCost3Description" name="purchaseCost3Description" type="text" placeholder="品項說明" aria-label="主石 3 說明"></div>
+                <div class="cost-controls">
+                  <div class="input-wrap"><input id="purchaseCost3" name="purchaseCost3" inputmode="decimal" placeholder="金額" aria-label="主石 3 金額" aria-describedby="purchaseCost3-error"></div>
+                  <select name="purchaseCost3Currency" aria-label="主石 3 幣別"><option value="CNY">CNY</option><option value="TWD">TWD</option></select>
+                </div>
+              </div>
+              <p class="error" id="purchaseCost3-error"></p>
+            </div>
+            <div class="field cost-field">
+              <label for="purchaseCost4" aria-label="主石 4 金額">4</label>
+              <div class="cost-detail-controls">
+                <div class="input-wrap"><input id="purchaseCost4Description" name="purchaseCost4Description" type="text" placeholder="品項說明" aria-label="主石 4 說明"></div>
+                <div class="cost-controls">
+                  <div class="input-wrap"><input id="purchaseCost4" name="purchaseCost4" inputmode="decimal" placeholder="金額" aria-label="主石 4 金額" aria-describedby="purchaseCost4-error"></div>
+                  <select name="purchaseCost4Currency" aria-label="主石 4 幣別"><option value="CNY">CNY</option><option value="TWD">TWD</option></select>
+                </div>
+              </div>
+              <p class="error" id="purchaseCost4-error"></p>
+            </div>
+            <div class="field cost-field">
+              <label for="purchaseCost5" aria-label="主石 5 金額">5</label>
+              <div class="cost-detail-controls">
+                <div class="input-wrap"><input id="purchaseCost5Description" name="purchaseCost5Description" type="text" placeholder="品項說明" aria-label="主石 5 說明"></div>
+                <div class="cost-controls">
+                  <div class="input-wrap"><input id="purchaseCost5" name="purchaseCost5" inputmode="decimal" placeholder="金額" aria-label="主石 5 金額" aria-describedby="purchaseCost5-error"></div>
+                  <select name="purchaseCost5Currency" aria-label="主石 5 幣別"><option value="CNY">CNY</option><option value="TWD">TWD</option></select>
+                </div>
+              </div>
+              <p class="error" id="purchaseCost5-error"></p>
+            </div>
+          </details>
+          <details class="cost-group" open>
+            <summary>配件</summary>
+            <div class="field cost-field">
+              <label for="materialsCost" aria-label="配件 1 金額">1</label>
+              <div class="cost-detail-controls">
+                <div class="input-wrap"><input id="materialsCostDescription" name="materialsCostDescription" type="text" placeholder="品項說明" aria-label="配件 1 說明"></div>
+                <div class="cost-controls">
+                  <div class="input-wrap"><input id="materialsCost" name="materialsCost" inputmode="decimal" placeholder="金額" aria-label="配件 1 金額" aria-describedby="materialsCost-error"></div>
+                  <select name="materialsCostCurrency" aria-label="配件 1 幣別"><option value="CNY">CNY</option><option value="TWD">TWD</option></select>
+                </div>
+              </div>
+              <p class="error" id="materialsCost-error"></p>
+            </div>
+            <div class="field cost-field">
+              <label for="materialsCost2" aria-label="配件 2 金額">2</label>
+              <div class="cost-detail-controls">
+                <div class="input-wrap"><input id="materialsCost2Description" name="materialsCost2Description" type="text" placeholder="品項說明" aria-label="配件 2 說明"></div>
+                <div class="cost-controls">
+                  <div class="input-wrap"><input id="materialsCost2" name="materialsCost2" inputmode="decimal" placeholder="金額" aria-label="配件 2 金額" aria-describedby="materialsCost2-error"></div>
+                  <select name="materialsCost2Currency" aria-label="配件 2 幣別"><option value="CNY">CNY</option><option value="TWD">TWD</option></select>
+                </div>
+              </div>
+              <p class="error" id="materialsCost2-error"></p>
+            </div>
+            <div class="field cost-field">
+              <label for="materialsCost3" aria-label="配件 3 金額">3</label>
+              <div class="cost-detail-controls">
+                <div class="input-wrap"><input id="materialsCost3Description" name="materialsCost3Description" type="text" placeholder="品項說明" aria-label="配件 3 說明"></div>
+                <div class="cost-controls">
+                  <div class="input-wrap"><input id="materialsCost3" name="materialsCost3" inputmode="decimal" placeholder="金額" aria-label="配件 3 金額" aria-describedby="materialsCost3-error"></div>
+                  <select name="materialsCost3Currency" aria-label="配件 3 幣別"><option value="CNY">CNY</option><option value="TWD">TWD</option></select>
+                </div>
+              </div>
+              <p class="error" id="materialsCost3-error"></p>
+            </div>
+            <div class="field cost-field">
+              <label for="materialsCost4" aria-label="配件 4 金額">4</label>
+              <div class="cost-detail-controls">
+                <div class="input-wrap"><input id="materialsCost4Description" name="materialsCost4Description" type="text" placeholder="品項說明" aria-label="配件 4 說明"></div>
+                <div class="cost-controls">
+                  <div class="input-wrap"><input id="materialsCost4" name="materialsCost4" inputmode="decimal" placeholder="金額" aria-label="配件 4 金額" aria-describedby="materialsCost4-error"></div>
+                  <select name="materialsCost4Currency" aria-label="配件 4 幣別"><option value="CNY">CNY</option><option value="TWD">TWD</option></select>
+                </div>
+              </div>
+              <p class="error" id="materialsCost4-error"></p>
+            </div>
+            <div class="field cost-field">
+              <label for="materialsCost5" aria-label="配件 5 金額">5</label>
+              <div class="cost-detail-controls">
+                <div class="input-wrap"><input id="materialsCost5Description" name="materialsCost5Description" type="text" placeholder="品項說明" aria-label="配件 5 說明"></div>
+                <div class="cost-controls">
+                  <div class="input-wrap"><input id="materialsCost5" name="materialsCost5" inputmode="decimal" placeholder="金額" aria-label="配件 5 金額" aria-describedby="materialsCost5-error"></div>
+                  <select name="materialsCost5Currency" aria-label="配件 5 幣別"><option value="CNY">CNY</option><option value="TWD">TWD</option></select>
+                </div>
+              </div>
+              <p class="error" id="materialsCost5-error"></p>
+            </div>
+          </details>
+          <details class="cost-group" open>
+            <summary>黃金／足銀</summary>
+            <div class="field cost-field">
+              <label for="metalCost" aria-label="黃金／足銀 1 金額">1</label>
+              <div class="cost-detail-controls">
+                <div class="input-wrap"><input id="metalCostDescription" name="metalCostDescription" type="text" placeholder="品項說明" aria-label="黃金／足銀 1 說明"></div>
+                <div class="cost-controls">
+                  <div class="input-wrap"><input id="metalCost" name="metalCost" inputmode="decimal" placeholder="金額" aria-label="黃金／足銀 1 金額" aria-describedby="metalCost-error"></div>
+                  <select name="metalCostCurrency" aria-label="黃金／足銀 1 幣別"><option value="CNY">CNY</option><option value="TWD">TWD</option></select>
+                </div>
+              </div>
+              <p class="error" id="metalCost-error"></p>
+            </div>
+            <div class="field cost-field">
+              <label for="metalCost2" aria-label="黃金／足銀 2 金額">2</label>
+              <div class="cost-detail-controls">
+                <div class="input-wrap"><input id="metalCost2Description" name="metalCost2Description" type="text" placeholder="品項說明" aria-label="黃金／足銀 2 說明"></div>
+                <div class="cost-controls">
+                  <div class="input-wrap"><input id="metalCost2" name="metalCost2" inputmode="decimal" placeholder="金額" aria-label="黃金／足銀 2 金額" aria-describedby="metalCost2-error"></div>
+                  <select name="metalCost2Currency" aria-label="黃金／足銀 2 幣別"><option value="CNY">CNY</option><option value="TWD">TWD</option></select>
+                </div>
+              </div>
+              <p class="error" id="metalCost2-error"></p>
+            </div>
+            <div class="field cost-field">
+              <label for="metalCost3" aria-label="黃金／足銀 3 金額">3</label>
+              <div class="cost-detail-controls">
+                <div class="input-wrap"><input id="metalCost3Description" name="metalCost3Description" type="text" placeholder="品項說明" aria-label="黃金／足銀 3 說明"></div>
+                <div class="cost-controls">
+                  <div class="input-wrap"><input id="metalCost3" name="metalCost3" inputmode="decimal" placeholder="金額" aria-label="黃金／足銀 3 金額" aria-describedby="metalCost3-error"></div>
+                  <select name="metalCost3Currency" aria-label="黃金／足銀 3 幣別"><option value="CNY">CNY</option><option value="TWD">TWD</option></select>
+                </div>
+              </div>
+              <p class="error" id="metalCost3-error"></p>
+            </div>
+            <div class="field cost-field">
+              <label for="metalCost4" aria-label="黃金／足銀 4 金額">4</label>
+              <div class="cost-detail-controls">
+                <div class="input-wrap"><input id="metalCost4Description" name="metalCost4Description" type="text" placeholder="品項說明" aria-label="黃金／足銀 4 說明"></div>
+                <div class="cost-controls">
+                  <div class="input-wrap"><input id="metalCost4" name="metalCost4" inputmode="decimal" placeholder="金額" aria-label="黃金／足銀 4 金額" aria-describedby="metalCost4-error"></div>
+                  <select name="metalCost4Currency" aria-label="黃金／足銀 4 幣別"><option value="CNY">CNY</option><option value="TWD">TWD</option></select>
+                </div>
+              </div>
+              <p class="error" id="metalCost4-error"></p>
+            </div>
+            <div class="field cost-field">
+              <label for="metalCost5" aria-label="黃金／足銀 5 金額">5</label>
+              <div class="cost-detail-controls">
+                <div class="input-wrap"><input id="metalCost5Description" name="metalCost5Description" type="text" placeholder="品項說明" aria-label="黃金／足銀 5 說明"></div>
+                <div class="cost-controls">
+                  <div class="input-wrap"><input id="metalCost5" name="metalCost5" inputmode="decimal" placeholder="金額" aria-label="黃金／足銀 5 金額" aria-describedby="metalCost5-error"></div>
+                  <select name="metalCost5Currency" aria-label="黃金／足銀 5 幣別"><option value="CNY">CNY</option><option value="TWD">TWD</option></select>
+                </div>
+              </div>
+              <p class="error" id="metalCost5-error"></p>
+            </div>
+          </details>
+        </div>
+        <div class="additional-costs">
+          <div class="field cost-field">
+            <label for="laborCost">工費</label>
+            <div class="cost-controls">
+              <div class="input-wrap"><input id="laborCost" name="laborCost" inputmode="decimal" placeholder="0" aria-describedby="laborCost-error"></div>
+              <select name="laborCostCurrency" aria-label="工費幣別"><option value="CNY">CNY</option><option value="TWD">TWD</option></select>
+            </div>
+            <p class="error" id="laborCost-error"></p>
+          </div>
+          <div class="field cost-field">
+            <label for="certificateCost">證書</label>
+            <div class="cost-controls">
+              <div class="input-wrap"><input id="certificateCost" name="certificateCost" inputmode="decimal" placeholder="0" aria-describedby="certificateCost-error"></div>
+              <select name="certificateCostCurrency" aria-label="證書幣別"><option value="TWD">TWD</option><option value="CNY">CNY</option></select>
+            </div>
+            <p class="error" id="certificateCost-error"></p>
+          </div>
+          <div class="field cost-field">
+            <label for="packagingCost">包裝盒</label>
+            <div class="cost-controls">
+              <div class="input-wrap"><input id="packagingCost" name="packagingCost" inputmode="decimal" placeholder="0" aria-describedby="packagingCost-error"></div>
+              <select name="packagingCostCurrency" aria-label="包裝盒幣別"><option value="TWD">TWD</option><option value="CNY">CNY</option></select>
+            </div>
+            <p class="error" id="packagingCost-error"></p>
+          </div>
+          <div class="field cost-field">
+            <label for="shippingCost">運費</label>
+            <div class="cost-controls fixed-currency">
+              <div class="input-wrap"><span id="shippingCost-unit">TWD</span><input id="shippingCost" name="shippingCost" inputmode="decimal" value="27" aria-describedby="shippingCost-unit shippingCost-error"></div>
+            </div>
+            <p class="error" id="shippingCost-error"></p>
+          </div>
+          <div class="field cost-field">
+            <label for="cartonCost">外箱</label>
+            <div class="cost-controls fixed-currency">
+              <div class="input-wrap"><span id="cartonCost-unit">TWD</span><input id="cartonCost" name="cartonCost" inputmode="decimal" value="12" aria-describedby="cartonCost-unit cartonCost-error"></div>
+            </div>
+            <p class="error" id="cartonCost-error"></p>
+          </div>
+          <div class="field cost-field">
+            <label for="otherCost">其他成本</label>
+            <div class="cost-controls">
+              <div class="input-wrap"><input id="otherCost" name="otherCost" inputmode="decimal" placeholder="0" aria-describedby="otherCost-error"></div>
+              <select name="otherCostCurrency" aria-label="其他成本幣別"><option value="TWD">TWD</option><option value="CNY">CNY</option></select>
+            </div>
+            <p class="error" id="otherCost-error"></p>
+          </div>
+        </div>
+          <details class="formula-panel">
+            <summary>實際進價與請款設定</summary>
+            <div class="formula-content">
+              <div class="field"><label for="purchaseOverride">實際進價（選填）</label>
+          <div class="input-wrap"><span aria-hidden="true">NT$</span><input id="purchaseOverride" name="purchaseOverride" inputmode="decimal" placeholder="預設為稅後批發價向下取整" aria-describedby="purchaseOverride-error"></div>
+          <p class="error" id="purchaseOverride-error"></p></div>
+              <label for="payoutBasis">請款基準</label>
+              <select id="payoutBasis" name="payoutBasis">
+                <option value="actual">實際進價（取整後）</option>
+                <option value="taxAdjusted">稅後批發價（取整前）</option>
+              </select>
+            </div>
+          </details>
+        <div class="form-actions">
+          <div class="cost-total">總成本 <output id="totalCost">—</output></div>
+          <div class="form-buttons">
+            <button type="button" id="example-button">帶入範例</button>
+            <button type="reset" class="text-button">恢復預設</button>
+            <button type="button" id="view-results-button" class="primary-button">查看試算結果</button>
+          </div>
+        </div>
+      </section>
+      <div class="result-column" id="results-page" aria-labelledby="results-title" hidden>
+        <div class="results-toolbar">
+          <h2 id="results-title" tabindex="-1">試算結果</h2>
+          <div class="export-actions">
+            <button type="button" id="export-excel">匯出 Excel</button>
+            <button type="button" id="export-pdf">儲存 PDF</button>
+          </div>
+        </div>
+        <section class="panel target-panel" aria-labelledby="price-heading">
+          <h2 id="price-heading">二、電視台價格計算</h2>
+          <dl class="formula-rows">
+            <div><dt>東森批發價<small>零售價 ×（1－東森抽成率）</small></dt><dd><output id="wholesale">—</output></dd></div>
+            <div><dt>稅後批發價<small>東森批發價 ÷ 1.05</small></dt><dd><output id="taxAdjusted">—</output></dd></div>
+            <div><dt>實際進價<small>稅後批發價向下取至 20 元的倍數，或採用手填進價</small></dt><dd><output id="actualPurchase">—</output></dd></div>
+            <div><dt>後扣 6%<small>東森批發價 × 6%</small></dt><dd><output id="deduction">—</output></dd></div>
+            <div><dt>實際拿回<small>所選請款基準－後扣</small></dt><dd><output id="payout">—</output></dd></div>
+          </dl>
+        </section>
+        <section class="result-panel" aria-labelledby="result-heading">
+          <div class="result-heading"><h2 id="result-heading">三、毛利分析</h2><span class="live-indicator">即時更新</span></div>
+          <dl class="formula-rows" aria-live="polite">
+            <div><dt>實際拿回<small>引用電視台價格計算的實際拿回</small></dt><dd><output id="analysisPayout">—</output></dd></div>
+            <div><dt>總成本<small>引用商品成本的總成本</small></dt><dd><output id="analysisCost">—</output></dd></div>
+            <div><dt>淨賺<small>實際拿回－總成本</small></dt><dd><output id="profit">—</output></dd></div>
+            <div><dt>毛利率<small>淨賺 ÷ 實際拿回 × 100%</small></dt><dd><output id="margin">—</output></dd></div>
+          </dl>
+          <p class="result-footnote" id="profit-note">輸入零售價後即可查看毛利分析。</p>
+        </section>
+        <details class="panel cost-breakdown">
+          <summary>各項成本換算明細（TWD）</summary>
+          <dl class="formula-rows">
+            <div><dt>主石 1</dt><dd><output id="purchaseCostTwd" aria-label="主石 1 換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>主石 2</dt><dd><output id="purchaseCost2Twd" aria-label="主石 2 換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>主石 3</dt><dd><output id="purchaseCost3Twd" aria-label="主石 3 換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>主石 4</dt><dd><output id="purchaseCost4Twd" aria-label="主石 4 換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>主石 5</dt><dd><output id="purchaseCost5Twd" aria-label="主石 5 換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>配件 1</dt><dd><output id="materialsCostTwd" aria-label="配件 1 換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>配件 2</dt><dd><output id="materialsCost2Twd" aria-label="配件 2 換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>配件 3</dt><dd><output id="materialsCost3Twd" aria-label="配件 3 換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>配件 4</dt><dd><output id="materialsCost4Twd" aria-label="配件 4 換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>配件 5</dt><dd><output id="materialsCost5Twd" aria-label="配件 5 換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>黃金／足銀 1</dt><dd><output id="metalCostTwd" aria-label="黃金／足銀 1 換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>黃金／足銀 2</dt><dd><output id="metalCost2Twd" aria-label="黃金／足銀 2 換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>黃金／足銀 3</dt><dd><output id="metalCost3Twd" aria-label="黃金／足銀 3 換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>黃金／足銀 4</dt><dd><output id="metalCost4Twd" aria-label="黃金／足銀 4 換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>黃金／足銀 5</dt><dd><output id="metalCost5Twd" aria-label="黃金／足銀 5 換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>工費</dt><dd><output id="laborCostTwd" aria-label="工費換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>證書</dt><dd><output id="certificateCostTwd" aria-label="證書換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>包裝盒</dt><dd><output id="packagingCostTwd" aria-label="包裝盒換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+            <div><dt>運費</dt><dd><output id="shippingCostTwd" aria-label="運費新臺幣成本">NT$ 27.00</output></dd></div>
+            <div><dt>外箱</dt><dd><output id="cartonCostTwd" aria-label="外箱新臺幣成本">NT$ 12.00</output></dd></div>
+            <div><dt>其他成本</dt><dd><output id="otherCostTwd" aria-label="其他成本換算後的新臺幣成本">NT$ 0.00</output></dd></div>
+          </dl>
+        </details>
+      </div>
+    </form>
+    <footer>所有試算皆在此裝置完成，重新整理後會清空。</footer>
+  </main>
+  <section id="print-report" aria-labelledby="print-title">
+    <h1 id="print-title">美帝亞珠寶｜售價與利潤試算</h1>
+    <table><colgroup><col><col><col><col><col></colgroup><tbody id="print-rows"></tbody></table>
+  </section>
+<script>
+(function (root) {
+  'use strict';
+
+  const costFields = [
+    'purchaseCost', 'purchaseCost2', 'purchaseCost3', 'purchaseCost4', 'purchaseCost5',
+    'materialsCost', 'materialsCost2', 'materialsCost3', 'materialsCost4', 'materialsCost5',
+    'metalCost', 'metalCost2', 'metalCost3', 'metalCost4', 'metalCost5',
+    'laborCost', 'certificateCost', 'packagingCost',
+    'shippingCost', 'cartonCost', 'otherCost'
+  ];
+  const moneyFields = [...costFields, 'salePrice', 'purchaseOverride'];
+  const inputFields = [...moneyFields, 'exchangeRate', 'commissionRate'];
+
+  function parseHundredths(raw, field, errors) {
+    const text = String(raw ?? '').trim();
+    if (text === '') return null;
+    if (!/^(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d{0,2})?$/.test(text)) {
+      errors[field] = '請輸入非負數字，最多兩位小數，逗號須依千分位使用。';
+      return null;
+    }
+    const [whole, fraction = ''] = text.replaceAll(',', '').split('.');
+    const value = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
+    if (value > 99999999999) {
+      errors[field] = '數值不可超過 999,999,999.99。';
+      return null;
+    }
+    return value;
+  }
+
+  function calculate(values = {}) {
+    const errors = {};
+    const amounts = Object.fromEntries(moneyFields.map(field => [
+      field, parseHundredths(values[field], field, errors)
+    ]));
+    const usesCny = field => field !== 'shippingCost' && field !== 'cartonCost'
+      && values[field + 'Currency'] === 'CNY';
+    const needsRate = costFields.some(field => usesCny(field) && amounts[field] !== null);
+    const rate = parseHundredths(values.exchangeRate ?? '4.7', 'exchangeRate', errors);
+    if (needsRate && !rate && !errors.exchangeRate) {
+      errors.exchangeRate = '換算人民幣時，請輸入大於 0 的匯率。';
+    }
+
+    // Keep the four decimal places from multiplying a CNY amount by the exchange rate.
+    const costUnits = costFields.map(field => {
+      if (errors[field]) return null;
+      if (amounts[field] === null) return 0n;
+      if (!usesCny(field)) return BigInt(amounts[field]) * 100n;
+      return errors.exchangeRate ? null : BigInt(amounts[field]) * BigInt(rate);
+    });
+    const costLines = Object.fromEntries(costFields.map((field, index) => [
+      field, costUnits[index] === null ? null : Number(costUnits[index]) / 10000
+    ]));
+    const totalCost = costUnits.includes(null)
+      ? null
+      : Number(costUnits.reduce((sum, amount) => sum + amount, 0n)) / 10000;
+
+    const commissionRate = parseHundredths(values.commissionRate ?? '50', 'commissionRate', errors);
+    if (commissionRate === null || commissionRate > 10000) {
+      errors.commissionRate = '請輸入 0 至 100 的抽成率，最多兩位小數。';
+    }
+
+    // Apply the rate in basis points and keep the unrounded wholesale price for tax and fees.
+    const wholesaleUnits = errors.commissionRate || amounts.salePrice === null ? null
+      : BigInt(amounts.salePrice) * BigInt(10000 - commissionRate);
+    const wholesale = wholesaleUnits === null ? null : Number(wholesaleUnits) / 1000000;
+    const taxAdjusted = wholesaleUnits === null ? null : Number(wholesaleUnits) / 1050000;
+    const actualPurchaseCents = errors.purchaseOverride ? null
+      : amounts.purchaseOverride ?? (wholesaleUnits === null ? null
+        : Number(wholesaleUnits / 21000000n) * 2000);
+    const actualPurchase = actualPurchaseCents === null ? null : actualPurchaseCents / 100;
+    const deductionUnits = wholesaleUnits === null ? null : wholesaleUnits * 6n;
+    const deduction = deductionUnits === null ? null : Number(deductionUnits) / 100000000;
+    let payout = null;
+    if (deductionUnits !== null) {
+      if (values.payoutBasis === 'taxAdjusted') {
+        payout = Number(wholesaleUnits * 10000n - deductionUnits * 105n) / 10500000000;
+      } else if (actualPurchaseCents !== null) {
+        const purchaseUnits = BigInt(actualPurchaseCents) * 1000000n;
+        payout = Number(purchaseUnits - deductionUnits) / 100000000;
+      }
+    }
+    const profit = payout === null || totalCost === null ? null : payout - totalCost;
+    const margin = profit === null || payout === 0 ? null : profit / payout * 100;
+
+    return { errors, costLines, totalCost, wholesale, taxAdjusted, actualPurchase, deduction, payout, profit, margin };
+  }
+
+  function reportRows(values, result, costLabels) {
+    const inputValue = field => {
+      const raw = String(values[field] ?? '').trim();
+      return !raw ? null : result.errors[field] ? raw : Number(raw.replaceAll(',', ''));
+    };
+    const costRows = costFields.map(field => [
+      costLabels[field],
+      values[field + 'Description'] || '',
+      values[field + 'Currency'] || 'TWD',
+      result.costLines[field],
+      inputValue(field)
+    ]);
+    const rows = [
+      ['一、商品成本'],
+      ['項目', '品項說明', '原幣別', '換算金額（TWD）', '原幣金額'],
+      ...costRows,
+      ['人民幣兌新臺幣匯率', '', '', inputValue('exchangeRate')],
+      ['總成本', '', '', result.totalCost],
+      ['二、電視台價格計算'],
+      ['零售價', '', '', inputValue('salePrice')],
+      ['東森抽成率 (%)', '', '', inputValue('commissionRate')],
+      ['實際進價（手填）', '', '', inputValue('purchaseOverride')],
+      ['請款基準', values.payoutBasis === 'taxAdjusted' ? '稅後批發價（取整前）' : '實際進價（取整後）'],
+      ['東森批發價', '', '', result.wholesale],
+      ['稅後批發價', '', '', result.taxAdjusted],
+      ['實際進價', '', '', result.actualPurchase],
+      ['後扣 6%', '', '', result.deduction],
+      ['實際拿回', '', '', result.payout],
+      ['三、毛利分析'],
+      ['實際拿回', '', '', result.payout],
+      ['總成本', '', '', result.totalCost],
+      ['淨賺', '', '', result.profit],
+      ['毛利率 (%)', '', '', result.margin]
+    ];
+    if (Object.keys(result.errors).length) {
+      rows.push(['輸入檢查'], ...Object.entries(result.errors).map(([field, message]) => [
+        costLabels[field] || {
+          exchangeRate: '人民幣兌新臺幣匯率', salePrice: '零售價',
+          commissionRate: '東森抽成率', purchaseOverride: '實際進價（手填）'
+        }[field],
+        message
+      ]));
+    }
+    return rows;
+  }
+
+  function xmlText(value) {
+    return String(value).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '')
+      .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  }
+
+  // XLSX is a ZIP of XML parts. Store the small parts without compression for offline export.
+  function zipFiles(files) {
+    const encoder = new TextEncoder();
+    const records = [];
+    const directory = [];
+    let offset = 0;
+    let directorySize = 0;
+    for (const [name, content] of Object.entries(files)) {
+      const path = encoder.encode(name);
+      const bytes = encoder.encode(content);
+      let crc = 0xffffffff;
+      for (const byte of bytes) {
+        crc ^= byte;
+        for (let bit = 0; bit < 8; bit++) {
+          crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+        }
+      }
+      crc ^= 0xffffffff;
+
+      const local = new DataView(new ArrayBuffer(30));
+      local.setUint32(0, 0x04034b50, true);
+      local.setUint16(4, 20, true);
+      local.setUint16(12, 33, true); // ZIP's first representable DOS date.
+      local.setUint32(14, crc, true);
+      local.setUint32(18, bytes.length, true);
+      local.setUint32(22, bytes.length, true);
+      local.setUint16(26, path.length, true);
+      records.push(local.buffer, path, bytes);
+
+      const entry = new DataView(new ArrayBuffer(46));
+      entry.setUint32(0, 0x02014b50, true);
+      entry.setUint16(4, 20, true);
+      entry.setUint16(6, 20, true);
+      entry.setUint16(14, 33, true);
+      entry.setUint32(16, crc, true);
+      entry.setUint32(20, bytes.length, true);
+      entry.setUint32(24, bytes.length, true);
+      entry.setUint16(28, path.length, true);
+      entry.setUint32(42, offset, true);
+      directory.push(entry.buffer, path);
+      offset += 30 + path.length + bytes.length;
+      directorySize += 46 + path.length;
+    }
+    const end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true);
+    end.setUint16(8, directory.length / 2, true);
+    end.setUint16(10, directory.length / 2, true);
+    end.setUint32(12, directorySize, true);
+    end.setUint32(16, offset, true);
+    return new Blob([...records, ...directory, end.buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+  }
+
+  function createWorkbook(rows) {
+    const spreadsheet = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+    const relationships = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    const packageRelationships = 'http://schemas.openxmlformats.org/package/2006/relationships';
+    const contentTypes = 'application/vnd.openxmlformats-officedocument.spreadsheetml';
+    const sheetRows = [['美帝亞珠寶｜售價與利潤試算'], ...rows].map((row, index) => {
+      const cells = row.map((value, column) => {
+        if (value === null || value === '') return '';
+        const address = 'ABCDE'[column] + (index + 1);
+        return typeof value === 'number'
+          ? `<c r="${address}" s="1"><v>${value}</v></c>`
+          : `<c r="${address}" t="inlineStr"><is><t xml:space="preserve">${xmlText(value)}</t></is></c>`;
+      });
+      return `<row r="${index + 1}">${cells.join('')}</row>`;
+    });
+    return zipFiles({
+      '[Content_Types].xml': `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="${contentTypes}.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="${contentTypes}.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="${contentTypes}.styles+xml"/></Types>`,
+      '_rels/.rels': `<Relationships xmlns="${packageRelationships}"><Relationship Id="rId1" Type="${relationships}/officeDocument" Target="xl/workbook.xml"/></Relationships>`,
+      'xl/workbook.xml': `<workbook xmlns="${spreadsheet}" xmlns:r="${relationships}"><sheets><sheet name="售價與利潤試算" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+      'xl/_rels/workbook.xml.rels': `<Relationships xmlns="${packageRelationships}"><Relationship Id="rId1" Type="${relationships}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${relationships}/styles" Target="styles.xml"/></Relationships>`,
+      'xl/styles.xml': `<styleSheet xmlns="${spreadsheet}"><fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`,
+      'xl/worksheets/sheet1.xml': `<worksheet xmlns="${spreadsheet}"><cols><col min="1" max="1" width="28" customWidth="1"/><col min="2" max="2" width="45" customWidth="1"/><col min="3" max="3" width="12" customWidth="1"/><col min="4" max="5" width="22" customWidth="1"/></cols><sheetData>${sheetRows.join('')}</sheetData></worksheet>`
+    });
+  }
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { calculate, reportRows, createWorkbook };
+  }
+  if (typeof document === 'undefined') return;
+
+  const form = document.getElementById('calculator');
+  const firstPage = document.getElementById('inputs-page');
+  const secondPage = document.getElementById('results-page');
+  const inputsButton = document.getElementById('inputs-button');
+  const resultsButton = document.getElementById('results-button');
+
+  function showResults(show) {
+    firstPage.hidden = show;
+    secondPage.hidden = !show;
+    const activeButton = show ? resultsButton : inputsButton;
+    const inactiveButton = show ? inputsButton : resultsButton;
+    activeButton.setAttribute('aria-current', 'page');
+    inactiveButton.removeAttribute('aria-current');
+    document.getElementById(show ? 'results-title' : 'inputs-title').focus();
+  }
+
+  inputsButton.addEventListener('click', () => showResults(false));
+  resultsButton.addEventListener('click', () => showResults(true));
+  document.getElementById('view-results-button').addEventListener('click', () => showResults(true));
+  if (window.matchMedia('(max-width: 850px)').matches) {
+    form.querySelectorAll('.cost-group').forEach(group => { group.open = false; });
+  }
+
+  const currency = new Intl.NumberFormat('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const money = value => value === null ? '—' : `NT$ ${currency.format(value)}`;
+
+  function currentReport() {
+    const values = Object.fromEntries(new FormData(form));
+    const costLabels = Object.fromEntries(costFields.map(field => {
+      const output = document.getElementById(field + 'Twd');
+      return [field, output.parentElement.previousElementSibling.textContent];
+    }));
+    return reportRows(values, calculate(values), costLabels);
+  }
+
+  function exportExcel() {
+    const url = URL.createObjectURL(createWorkbook(currentReport()));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '美帝亞珠寶-售價與利潤試算.xlsx';
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }
+
+  function preparePrintReport() {
+    const rows = currentReport().map(values => {
+      const row = document.createElement('tr');
+      if (values.length === 1) {
+        const heading = document.createElement('th');
+        heading.colSpan = 5;
+        heading.textContent = values[0];
+        row.className = 'report-section';
+        row.append(heading);
+      } else {
+        for (let index = 0; index < 5; index++) {
+          const value = values[index];
+          const cell = document.createElement(values[0] === '項目' ? 'th' : 'td');
+          if (cell.tagName === 'TH') cell.scope = 'col';
+          cell.textContent = typeof value === 'number' ? currency.format(value) : value ?? '';
+          row.append(cell);
+        }
+      }
+      return row;
+    });
+    document.getElementById('print-rows').replaceChildren(...rows);
+  }
+
+  document.getElementById('export-excel').addEventListener('click', exportExcel);
+  document.getElementById('export-pdf').addEventListener('click', () => window.print());
+  window.addEventListener('beforeprint', preparePrintReport);
+
+  function render() {
+    const result = calculate(Object.fromEntries(new FormData(form)));
+    for (const field of inputFields) {
+      const message = result.errors[field] || '';
+      document.getElementById(field + '-error').textContent = message;
+      form.elements[field].setAttribute('aria-invalid', String(Boolean(message)));
+    }
+    for (const field of costFields) {
+      document.getElementById(field + 'Twd').textContent = money(result.costLines[field]);
+    }
+    for (const field of ['totalCost', 'wholesale', 'taxAdjusted', 'actualPurchase', 'deduction', 'payout', 'profit']) {
+      document.getElementById(field).textContent = money(result[field]);
+    }
+    document.getElementById('analysisPayout').textContent = money(result.payout);
+    document.getElementById('analysisCost').textContent = money(result.totalCost);
+    document.getElementById('margin').textContent = result.margin === null ? '—' : `${currency.format(result.margin)}%`;
+    document.getElementById('profit').dataset.loss = String(result.profit < 0);
+    const note = document.getElementById('profit-note');
+    if (Object.keys(result.errors).length) {
+      note.textContent = '請修正標示的欄位。';
+    } else if (result.payout === null) {
+      note.textContent = '輸入零售價與東森抽成率後即可查看毛利分析。';
+    } else if (result.payout === 0) {
+      note.textContent = '實際拿回為 0，無法計算毛利率。';
+    } else if (result.profit < 0) {
+      note.textContent = '實際拿回低於總成本，目前為虧損。';
+    } else if (result.profit === 0) {
+      note.textContent = '實際拿回等於總成本，目前為損益兩平。';
+    } else {
+      note.textContent = '';
+    }
+  }
+
+  form.addEventListener('input', render);
+  form.addEventListener('submit', event => event.preventDefault());
+  form.addEventListener('reset', () => queueMicrotask(render));
+  document.getElementById('example-button').addEventListener('click', () => {
+    form.reset();
+    const example = { purchaseCost: '4460', purchaseCostCurrency: 'TWD', purchaseCostDescription: '金珀心經',
+      materialsCost: '750', materialsCostCurrency: 'TWD', certificateCost: '1470',
+      packagingCost: '231', shippingCost: '150', cartonCost: '12', salePrice: '29800' };
+    for (const [field, value] of Object.entries(example)) form.elements[field].value = value;
+    render();
+  });
+  render();
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+</script>
+</body>
+</html>
