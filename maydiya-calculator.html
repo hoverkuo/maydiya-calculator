@@ -454,6 +454,29 @@ h1 {
 .pricing-fields {
   margin-top:10px;
 }
+.shopping-channel {
+  border:0;
+  padding:0;
+  margin:10px 0 0;
+}
+.shopping-channel legend {
+  font-size:14px;
+  font-weight:600;
+  margin-bottom:4px;
+}
+.shopping-channel label {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin-right:16px;
+}
+.shopping-channel input {
+  width:auto;
+  accent-color:var(--green);
+}
+#inputs-page .viva-shipping {
+  margin-bottom:10px;
+}
 .additional-costs {
   grid-template-columns:repeat(6,minmax(0,1fr));
   margin-top:12px;
@@ -671,6 +694,11 @@ h1 {
       </nav>
       <section class="panel input-panel" id="inputs-page" aria-labelledby="inputs-title">
         <h2 id="inputs-title" tabindex="-1">輸入資料</h2>
+        <fieldset class="shopping-channel">
+          <legend>購物台</legend>
+          <label><input type="radio" name="channel" value="et" checked> 1. 東森</label>
+          <label><input type="radio" name="channel" value="viva"> 2. VIVA</label>
+        </fieldset>
         <div class="pricing-fields">
           <div class="field">
             <label for="exchangeRate">人民幣兌新臺幣匯率</label>
@@ -683,7 +711,7 @@ h1 {
             <p class="error" id="salePrice-error"></p>
           </div>
           <div class="field">
-            <label for="commissionRate">東森抽成率</label>
+            <label for="commissionRate">購物台抽成率</label>
             <div class="input-wrap"><span aria-hidden="true">%</span><input id="commissionRate" name="commissionRate" inputmode="decimal" value="50" aria-describedby="commissionRate-error"></div>
             <p class="error" id="commissionRate-error"></p>
           </div>
@@ -865,6 +893,13 @@ h1 {
             </div>
           </details>
         </div>
+        <div class="field viva-shipping" id="viva-shipping" hidden>
+          <label for="shippingMethod">VIVA 運費類型</label>
+          <select id="shippingMethod" name="shippingMethod" disabled>
+            <option value="direct">A. 指寄（預設 NT$ 80）</option>
+            <option value="standard">B. 一般（預設 NT$ 50）</option>
+          </select>
+        </div>
         <div class="additional-costs">
           <div class="field cost-field">
             <label for="laborCost">工費</label>
@@ -944,19 +979,19 @@ h1 {
           </div>
         </div>
         <section class="panel target-panel" aria-labelledby="price-heading">
-          <h2 id="price-heading">二、電視台價格計算</h2>
+          <h2 id="price-heading">二、購物台價格計算</h2>
           <dl class="formula-rows">
-            <div><dt>東森批發價<small>零售價 ×（1－東森抽成率）</small></dt><dd><output id="wholesale">—</output></dd></div>
-            <div><dt>稅後批發價<small>東森批發價 ÷ 1.05</small></dt><dd><output id="taxAdjusted">—</output></dd></div>
+            <div><dt>購物台批發價<small>零售價 ×（1－購物台抽成率）</small></dt><dd><output id="wholesale">—</output></dd></div>
+            <div><dt>稅後批發價<small>購物台批發價 ÷ 1.05</small></dt><dd><output id="taxAdjusted">—</output></dd></div>
             <div><dt>實際進價<small>稅後批發價向下取至 20 元的倍數，或採用手填進價</small></dt><dd><output id="actualPurchase">—</output></dd></div>
-            <div><dt>後扣 6%<small>東森批發價 × 6%</small></dt><dd><output id="deduction">—</output></dd></div>
+            <div><dt>後扣 <span id="deduction-rate-label">6%</span><small>購物台批發價 × 後扣率</small></dt><dd><output id="deduction">—</output></dd></div>
             <div><dt>實際拿回<small>所選請款基準－後扣</small></dt><dd><output id="payout">—</output></dd></div>
           </dl>
         </section>
         <section class="result-panel" aria-labelledby="result-heading">
           <div class="result-heading"><h2 id="result-heading">三、毛利分析</h2><span class="live-indicator">即時更新</span></div>
           <dl class="formula-rows" aria-live="polite">
-            <div><dt>實際拿回<small>引用電視台價格計算的實際拿回</small></dt><dd><output id="analysisPayout">—</output></dd></div>
+            <div><dt>實際拿回<small>引用購物台價格計算的實際拿回</small></dt><dd><output id="analysisPayout">—</output></dd></div>
             <div><dt>總成本<small>引用商品成本的總成本</small></dt><dd><output id="analysisCost">—</output></dd></div>
             <div><dt>淨賺<small>實際拿回－總成本</small></dt><dd><output id="profit">—</output></dd></div>
             <div><dt>毛利率<small>淨賺 ÷ 實際拿回 × 100%</small></dt><dd><output id="margin">—</output></dd></div>
@@ -1010,6 +1045,14 @@ h1 {
   ];
   const moneyFields = [...costFields, 'salePrice', 'purchaseOverride'];
   const inputFields = [...moneyFields, 'exchangeRate', 'commissionRate'];
+  const channels = {
+    et: { label: '東森', deductionRate: 6, cartonCost: '12', shippingCost: '27' },
+    viva: { label: 'VIVA', deductionRate: 5, cartonCost: '8.5' }
+  };
+  const vivaShippingMethods = {
+    direct: { label: 'A. 指寄', cost: '80' },
+    standard: { label: 'B. 一般', cost: '50' }
+  };
 
   function parseHundredths(raw, field, errors) {
     const text = String(raw ?? '').trim();
@@ -1029,6 +1072,8 @@ h1 {
 
   function calculate(values = {}) {
     const errors = {};
+    const channel = values.channel === 'viva' ? channels.viva : channels.et;
+    const deductionRate = channel.deductionRate;
     const amounts = Object.fromEntries(moneyFields.map(field => [
       field, parseHundredths(values[field], field, errors)
     ]));
@@ -1068,7 +1113,7 @@ h1 {
       : amounts.purchaseOverride ?? (wholesaleUnits === null ? null
         : Number(wholesaleUnits / 21000000n) * 2000);
     const actualPurchase = actualPurchaseCents === null ? null : actualPurchaseCents / 100;
-    const deductionUnits = wholesaleUnits === null ? null : wholesaleUnits * 6n;
+    const deductionUnits = wholesaleUnits === null ? null : wholesaleUnits * BigInt(deductionRate);
     const deduction = deductionUnits === null ? null : Number(deductionUnits) / 100000000;
     let payout = null;
     if (deductionUnits !== null) {
@@ -1082,36 +1127,40 @@ h1 {
     const profit = payout === null || totalCost === null ? null : payout - totalCost;
     const margin = profit === null || payout === 0 ? null : profit / payout * 100;
 
-    return { errors, costLines, totalCost, wholesale, taxAdjusted, actualPurchase, deduction, payout, profit, margin };
+    return { errors, costLines, totalCost, wholesale, taxAdjusted, actualPurchase, deductionRate, deduction, payout, profit, margin };
   }
 
   function reportRows(values, result, costLabels) {
+    const isViva = values.channel === 'viva';
+    const channel = isViva ? channels.viva : channels.et;
+    const shipping = values.shippingMethod === 'standard' ? vivaShippingMethods.standard : vivaShippingMethods.direct;
     const inputValue = field => {
       const raw = String(values[field] ?? '').trim();
       return !raw ? null : result.errors[field] ? raw : Number(raw.replaceAll(',', ''));
     };
     const costRows = costFields.map(field => [
       costLabels[field],
-      values[field + 'Description'] || '',
+      field === 'shippingCost' && isViva ? shipping.label : values[field + 'Description'] || '',
       values[field + 'Currency'] || 'TWD',
       result.costLines[field],
       inputValue(field)
     ]);
     const rows = [
+      ['購物台', channel.label],
       ['一、商品成本'],
       ['項目', '品項說明', '原幣別', '換算金額（TWD）', '原幣金額'],
       ...costRows,
       ['人民幣兌新臺幣匯率', '', '', inputValue('exchangeRate')],
       ['總成本', '', '', result.totalCost],
-      ['二、電視台價格計算'],
+      ['二、購物台價格計算'],
       ['零售價', '', '', inputValue('salePrice')],
-      ['東森抽成率 (%)', '', '', inputValue('commissionRate')],
+      ['購物台抽成率 (%)', '', '', inputValue('commissionRate')],
       ['實際進價（手填）', '', '', inputValue('purchaseOverride')],
       ['請款基準', values.payoutBasis === 'taxAdjusted' ? '稅後批發價（取整前）' : '實際進價（取整後）'],
-      ['東森批發價', '', '', result.wholesale],
+      ['購物台批發價', '', '', result.wholesale],
       ['稅後批發價', '', '', result.taxAdjusted],
       ['實際進價', '', '', result.actualPurchase],
-      ['後扣 6%', '', '', result.deduction],
+      [`後扣 ${result.deductionRate}%`, '', '', result.deduction],
       ['實際拿回', '', '', result.payout],
       ['三、毛利分析'],
       ['實際拿回', '', '', result.payout],
@@ -1123,7 +1172,7 @@ h1 {
       rows.push(['輸入檢查'], ...Object.entries(result.errors).map(([field, message]) => [
         costLabels[field] || {
           exchangeRate: '人民幣兌新臺幣匯率', salePrice: '零售價',
-          commissionRate: '東森抽成率', purchaseOverride: '實際進價（手填）'
+          commissionRate: '購物台抽成率', purchaseOverride: '實際進價（手填）'
         }[field],
         message
       ]));
@@ -1221,6 +1270,21 @@ h1 {
   if (typeof document === 'undefined') return;
 
   const form = document.getElementById('calculator');
+  const vivaShipping = document.getElementById('viva-shipping');
+  const shippingMethod = form.elements.shippingMethod;
+
+  function syncShippingOptions() {
+    const isViva = form.elements.channel.value === 'viva';
+    vivaShipping.hidden = !isViva;
+    shippingMethod.disabled = !isViva;
+  }
+
+  function applyShippingDefault() {
+    const isViva = form.elements.channel.value === 'viva';
+    form.elements.shippingCost.value = isViva
+      ? vivaShippingMethods[shippingMethod.value].cost
+      : channels.et.shippingCost;
+  }
   const firstPage = document.getElementById('inputs-page');
   const secondPage = document.getElementById('results-page');
   const inputsButton = document.getElementById('inputs-button');
@@ -1295,6 +1359,7 @@ h1 {
 
   function render() {
     const result = calculate(Object.fromEntries(new FormData(form)));
+    document.getElementById('deduction-rate-label').textContent = `${result.deductionRate}%`;
     for (const field of inputFields) {
       const message = result.errors[field] || '';
       document.getElementById(field + '-error').textContent = message;
@@ -1314,7 +1379,7 @@ h1 {
     if (Object.keys(result.errors).length) {
       note.textContent = '請修正標示的欄位。';
     } else if (result.payout === null) {
-      note.textContent = '輸入零售價與東森抽成率後即可查看毛利分析。';
+      note.textContent = '輸入零售價與購物台抽成率後即可查看毛利分析。';
     } else if (result.payout === 0) {
       note.textContent = '實際拿回為 0，無法計算毛利率。';
     } else if (result.profit < 0) {
@@ -1326,17 +1391,39 @@ h1 {
     }
   }
 
-  form.addEventListener('input', render);
+  form.addEventListener('input', event => {
+    if (event.target.name === 'channel') {
+      const channel = channels[form.elements.channel.value];
+      form.elements.cartonCost.value = channel.cartonCost;
+      syncShippingOptions();
+      applyShippingDefault();
+    } else if (event.target === shippingMethod) {
+      applyShippingDefault();
+    }
+    render();
+  });
   form.addEventListener('submit', event => event.preventDefault());
-  form.addEventListener('reset', () => queueMicrotask(render));
+  form.addEventListener('reset', () => setTimeout(() => {
+    syncShippingOptions();
+    render();
+  }, 0));
   document.getElementById('example-button').addEventListener('click', () => {
+    const channel = form.elements.channel.value;
+    const selectedShipping = shippingMethod.value;
     form.reset();
     const example = { purchaseCost: '4460', purchaseCostCurrency: 'TWD', purchaseCostDescription: '金珀心經',
       materialsCost: '750', materialsCostCurrency: 'TWD', certificateCost: '1470',
       packagingCost: '231', shippingCost: '150', cartonCost: '12', salePrice: '29800' };
     for (const [field, value] of Object.entries(example)) form.elements[field].value = value;
+    form.elements.channel.value = channel;
+    if (channel === 'viva') {
+      shippingMethod.value = selectedShipping;
+      form.elements.cartonCost.value = channels.viva.cartonCost;
+      applyShippingDefault();
+    }
     render();
   });
+  syncShippingOptions();
   render();
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 </script>
