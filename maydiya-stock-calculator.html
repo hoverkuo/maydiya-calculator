@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>備貨滾貨計算器｜美帝亞珠寶</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      color: #172923;
+      background: #f5f7f3;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header { background: #16473b; color: white; }
+    .wrap { width: min(1060px, calc(100% - 32px)); margin-inline: auto; }
+    header .wrap { padding-block: 16px; font-weight: 700; }
+    main { padding-block: clamp(24px, 5vw, 56px); }
+    h1 { margin: 0 0 20px; font-size: clamp(28px, 5vw, 42px); }
+    h2 { margin: 0; font-size: 19px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+    .panel { padding: clamp(16px, 3vw, 28px); background: white; border: 1px solid #dce5dd; border-radius: 16px; }
+    .form-heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 16px; }
+    button { font: inherit; color: #16473b; background: #edf5ef; border: 1px solid #cfdfd5; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+    .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
+    label { display: block; font-weight: 700; margin-bottom: 6px; }
+    .control { display: flex; align-items: center; gap: 6px; border: 1px solid #abbfb4; border-radius: 8px; padding-inline: 10px; }
+    input { font: inherit; font-variant-numeric: tabular-nums; color: inherit; background: none; width: 100%; min-width: 0; border: 0; padding-block: 11px; }
+    input:focus { outline: 0; }
+    .control:focus-within, button:focus-visible { outline: 2px solid #246850; outline-offset: 2px; }
+    .control span, .hint { color: #4f655b; font-size: 13px; }
+    .hint { display: block; margin-top: 6px; line-height: 1.5; }
+    .error { color: #a02e22; margin: 12px 0 0; }
+    .error:empty { display: none; }
+    .summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+    .metric { background: #edf5ef; border-radius: 10px; padding: 12px; }
+    .metric output { display: block; font-weight: 800; font-size: clamp(19px, 3vw, 27px); color: #16473b; margin-top: 4px; overflow-wrap: anywhere; }
+    .metric.shortfall { background: #fbf2e7; }
+    .metric.shortfall output { color: #754619; }
+    dl { margin: 14px 0 0; }
+    dl div { display: flex; justify-content: space-between; gap: 8px; padding: 9px 0; border-bottom: 1px solid #e7ece7; }
+    dd { margin: 0; text-align: right; }
+    output { font-variant-numeric: tabular-nums; }
+    details { margin-top: 16px; color: #41584d; line-height: 1.55; font-size: 14px; }
+    summary { cursor: pointer; font-weight: 700; }
+    details p { margin: 8px 0 0; }
+    @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } }
+    @media (max-width: 360px) { .fields { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header><div class="wrap">美帝亞珠寶</div></header>
+  <main class="wrap">
+    <h1>備貨滾貨計算器</h1>
+    <div class="layout">
+      <form class="panel" id="stock-form" novalidate>
+        <div class="form-heading">
+          <h2>備貨資料</h2>
+          <button type="button" id="example">帶入範例</button>
+        </div>
+        <div class="fields">
+          <div>
+            <label for="planned">應備貨量</label>
+            <div class="control"><input id="planned" type="number" min="0" max="1000000000" step="1" value="100" inputmode="numeric" required><span>組</span></div>
+          </div>
+          <div>
+            <label for="actual">實際備貨量</label>
+            <div class="control"><input id="actual" type="number" min="0" max="1000000000" step="1" value="70" inputmode="numeric" required><span>組</span></div>
+          </div>
+          <div>
+            <label for="virtual">虛單量</label>
+            <div class="control"><input id="virtual" type="number" min="0" max="1000000000" step="1" placeholder="30" inputmode="numeric" aria-describedby="virtual-hint"><span>組</span></div>
+            <small class="hint" id="virtual-hint">留空時採用應備與實備的差額。</small>
+          </div>
+          <div>
+            <label for="rate">退貨率估算</label>
+            <div class="control"><input id="rate" type="number" min="0" max="100" step="0.01" value="20" inputmode="decimal" required aria-describedby="rate-hint"><span>%</span></div>
+            <small class="hint" id="rate-hint">以應備貨量為基準。</small>
+          </div>
+        </div>
+        <p class="error" id="error" role="status"></p>
+      </form>
+      <section class="panel" aria-labelledby="results-heading">
+        <h2 id="results-heading">出貨試算</h2>
+        <div aria-live="polite">
+          <div class="summary">
+            <div class="metric">滾貨補出<output id="rolled">—</output></div>
+            <div class="metric shortfall">仍缺貨量<output id="shortfall">—</output></div>
+          </div>
+          <dl>
+            <div><dt>第一批可出貨</dt><dd><output id="initial">—</output></dd></div>
+            <div><dt>待補虛單量</dt><dd><output id="waiting">—</output></dd></div>
+            <div><dt>預估可回用退貨</dt><dd><output id="returns">—</output></dd></div>
+            <div><dt>累計可出貨</dt><dd><output id="total">—</output></dd></div>
+          </dl>
+        </div>
+        <details>
+          <summary>計算方式</summary>
+          <p>預估可回用退貨＝應備貨量 × 退貨率，小數無條件捨去，上限為第一批可出貨量。滾貨補出量以待補虛單和缺貨量為上限。</p>
+          <p>累計可出貨＝第一批可出貨＋滾貨補出。仍缺貨量＝應備貨量－累計可出貨。</p>
+        </details>
+      </section>
+    </div>
+  </main>
+  <script>
+    'use strict';
+
+    const form = document.getElementById('stock-form');
+    const planned = document.getElementById('planned');
+    const actual = document.getElementById('actual');
+    const virtual = document.getElementById('virtual');
+    const rate = document.getElementById('rate');
+    const error = document.getElementById('error');
+    const quantity = new Intl.NumberFormat('zh-TW');
+    const outputIds = ['rolled', 'shortfall', 'initial', 'waiting', 'returns', 'total'];
+
+    function render() {
+      const originalGap = Math.max(0, planned.valueAsNumber - actual.valueAsNumber);
+      virtual.placeholder = Number.isFinite(originalGap) ? String(originalGap) : '自動估算';
+      let message = '';
+      if (![planned, actual, virtual].every(input => input.validity.valid)) {
+        message = '請輸入 0 到 10 億之間的整組數。';
+      } else if (!rate.validity.valid) {
+        message = '請輸入 0% 到 100% 之間的退貨率，最多兩位小數。';
+      }
+      error.textContent = message;
+      if (message) {
+        for (const id of outputIds) document.getElementById(id).textContent = '—';
+        return;
+      }
+
+      const demand = planned.valueAsNumber;
+      const initial = Math.min(demand, actual.valueAsNumber);
+      const waiting = virtual.value === '' ? originalGap : virtual.valueAsNumber;
+      // Use hundredths of a percent so a whole-group result rounds down correctly.
+      const rateHundredths = Math.round(rate.valueAsNumber * 100);
+      const returns = Math.min(initial, Math.floor(demand * rateHundredths / 10000));
+      const rolled = Math.min(returns, waiting, originalGap);
+      const total = initial + rolled;
+      const results = { rolled, shortfall: demand - total, initial, waiting, returns, total };
+      for (const id of outputIds) {
+        document.getElementById(id).textContent = quantity.format(results[id]) + ' 組';
+      }
+    }
+
+    form.addEventListener('input', render);
+    form.addEventListener('submit', event => event.preventDefault());
+    document.getElementById('example').addEventListener('click', () => {
+      form.reset();
+      render();
+    });
+    render();
+  </script>
+</body>
+</html>
