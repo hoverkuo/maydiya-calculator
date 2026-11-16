@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#163f38">
   <meta name="description" content="美帝亞珠寶成本工具，即時計算商品成本、電視台請款金額、淨賺與毛利率。">
-  <title>售價與利潤計算器｜美帝亞珠寶</title>
+  <title>購物台品號成本分析表｜美帝亞珠寶</title>
   <style>
 :root {
   color-scheme:light;
@@ -681,11 +681,11 @@ h1 {
       <svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M10 8h20l7 11-17 17L3 19 10 8Z M3 19h34 M10 8l10 28L30 8 M10 8l10 11L30 8" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
       <span>美帝亞珠寶<small>MAYDIYA JEWELRY</small></span>
     </a>
-    <span class="header-note">營運工具 <span aria-hidden="true">／</span> 售價試算</span>
+    <span class="header-note">營運工具 <span aria-hidden="true">／</span> 品號成本分析</span>
   </header>
   <main>
     <section class="intro" aria-labelledby="page-title">
-      <h1 id="page-title">售價與利潤計算器</h1>
+      <h1 id="page-title">購物台品號成本分析表</h1>
     </section>
     <form id="calculator" novalidate autocomplete="off">
       <nav class="calculator-pages" aria-label="試算頁面">
@@ -1029,7 +1029,7 @@ h1 {
     <footer>所有試算皆在此裝置完成，重新整理後會清空。</footer>
   </main>
   <section id="print-report" aria-labelledby="print-title">
-    <h1 id="print-title">美帝亞珠寶｜售價與利潤試算</h1>
+    <h1 id="print-title">美帝亞珠寶｜購物台品號成本分析表</h1>
     <table><colgroup><col><col><col><col><col></colgroup><tbody id="print-rows"></tbody></table>
   </section>
 <script>
@@ -1244,7 +1244,7 @@ h1 {
     const relationships = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
     const packageRelationships = 'http://schemas.openxmlformats.org/package/2006/relationships';
     const contentTypes = 'application/vnd.openxmlformats-officedocument.spreadsheetml';
-    const sheetRows = [['美帝亞珠寶｜售價與利潤試算'], ...rows].map((row, index) => {
+    const sheetRows = [['美帝亞珠寶｜購物台品號成本分析表'], ...rows].map((row, index) => {
       const cells = row.map((value, column) => {
         if (value === null || value === '') return '';
         const address = 'ABCDE'[column] + (index + 1);
@@ -1257,7 +1257,7 @@ h1 {
     return zipFiles({
       '[Content_Types].xml': `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="${contentTypes}.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="${contentTypes}.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="${contentTypes}.styles+xml"/></Types>`,
       '_rels/.rels': `<Relationships xmlns="${packageRelationships}"><Relationship Id="rId1" Type="${relationships}/officeDocument" Target="xl/workbook.xml"/></Relationships>`,
-      'xl/workbook.xml': `<workbook xmlns="${spreadsheet}" xmlns:r="${relationships}"><sheets><sheet name="售價與利潤試算" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+      'xl/workbook.xml': `<workbook xmlns="${spreadsheet}" xmlns:r="${relationships}"><sheets><sheet name="購物台品號成本分析表" sheetId="1" r:id="rId1"/></sheets></workbook>`,
       'xl/_rels/workbook.xml.rels': `<Relationships xmlns="${packageRelationships}"><Relationship Id="rId1" Type="${relationships}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${relationships}/styles" Target="styles.xml"/></Relationships>`,
       'xl/styles.xml': `<styleSheet xmlns="${spreadsheet}"><fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`,
       'xl/worksheets/sheet1.xml': `<worksheet xmlns="${spreadsheet}"><cols><col min="1" max="1" width="28" customWidth="1"/><col min="2" max="2" width="45" customWidth="1"/><col min="3" max="3" width="12" customWidth="1"/><col min="4" max="5" width="22" customWidth="1"/></cols><sheetData>${sheetRows.join('')}</sheetData></worksheet>`
@@ -1323,7 +1323,7 @@ h1 {
     const url = URL.createObjectURL(createWorkbook(currentReport()));
     const link = document.createElement('a');
     link.href = url;
-    link.download = '美帝亞珠寶-售價與利潤試算.xlsx';
+    link.download = '美帝亞珠寶-購物台品號成本分析表.xlsx';
     document.body.append(link);
     link.click();
     link.remove();
