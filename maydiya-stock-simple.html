@@ -24,12 +24,14 @@
     .table-wrap { overflow-x: auto; scrollbar-width: none; }
     .table-wrap::-webkit-scrollbar { display: none; }
     table { width: 100%; min-width: 1140px; table-layout: fixed; border-collapse: collapse; }
-    thead th:first-child { width: 220px; }
+    thead th:first-child { width: 210px; }
     thead th:nth-child(2) { width: 150px; }
     .batch-info { vertical-align: top; background: #f5f8f8; }
-    .batch-info strong { display: block; margin-bottom: 10px; }
-    .batch-info label { display: grid; gap: 3px; margin-top: 8px; font-size: 12px; color: #435f64; }
-    .batch-info input { font-size: 13px; }
+    .batch-top { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+    .batch-info strong { flex: 1; min-width: 0; font-size: 12px; line-height: 1.35; }
+    .batch-info label { display: grid; gap: 2px; font-size: 11px; color: #435f64; }
+    .batch-top label { width: 64px; flex-shrink: 0; }
+    .batch-info input { font-size: 13px; min-height: 30px; padding: 4px 5px; }
     th, td { padding: 9px; text-align: left; border-bottom: 1px solid #e2ebec; }
     thead th { background: #d7e8eb; }
     tbody th { font-weight: 500; }
@@ -154,7 +156,10 @@
       info.className = 'batch-info';
       const heading = document.createElement('strong');
       heading.textContent = (index + 1) + '. ' + name;
-      info.append(heading);
+      const top = document.createElement('div');
+      top.className = 'batch-top';
+      top.append(heading);
+      info.append(top);
       row.append(info);
       const plannedDate = document.createElement('input');
       plannedDate.type = 'date';
@@ -170,7 +175,7 @@
       bookedQuantity.inputMode = 'numeric';
       const bookedLabel = document.createElement('label');
       bookedLabel.append('開單量', bookedQuantity);
-      info.append(bookedLabel);
+      top.append(bookedLabel);
       const date = document.createElement('input');
       date.type = 'date';
       date.className = 'date-input';
