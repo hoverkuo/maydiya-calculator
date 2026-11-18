@@ -230,8 +230,8 @@
       const actualOrders = rows.map(({ actualOrder }) =>
         actualOrder.validity.valid ? actualOrder.valueAsNumber : NaN
       ).filter(Number.isFinite);
-      totalActualOrders.textContent = actualOrders.length
-        ? show(actualOrders.reduce((sum, count) => sum + count, 0)) : '—';
+      const actualOrderTotal = actualOrders.reduce((sum, count) => sum + count, 0);
+      totalActualOrders.textContent = actualOrders.length ? show(actualOrderTotal) : '—';
       rows.forEach((row, index) => {
         const dateParts = row.plannedDate.value.split('-');
         const name = index < 2 ? batchNames[index]
@@ -262,11 +262,12 @@
       const validSecondDays = secondRolloverDays.validity.valid && Number.isSafeInteger(secondWaitingDays)
         && secondWaitingDays >= waitingDays;
       const quantities = rows.map(({ quantity }) => quantity.validity.valid ? quantity.valueAsNumber : NaN);
-      const enteredQuantities = quantities.filter(Number.isFinite);
-      const inboundTotal = enteredQuantities.reduce((sum, quantity) => sum + quantity, 0);
-      totalInbound.textContent = enteredQuantities.length ? format.format(inboundTotal) : '—';
-      gap.textContent = enteredQuantities.length && actualSales.validity.valid && Number.isFinite(actualSales.valueAsNumber)
-        ? format.format(inboundTotal - actualSales.valueAsNumber) : '—';
+      const bookedQuantities = rows.map(({ bookedQuantity }) =>
+        bookedQuantity.validity.valid ? bookedQuantity.valueAsNumber : NaN
+      ).filter(Number.isFinite);
+      const bookedTotal = bookedQuantities.reduce((sum, count) => sum + count, 0);
+      totalInbound.textContent = bookedQuantities.length ? show(bookedTotal) : '—';
+      gap.textContent = bookedQuantities.length ? show(bookedTotal - actualOrderTotal) : '—';
       const ownCounts = quantities.map(quantity => (
         validRate && Number.isFinite(quantity) ? Math.floor(quantity * rateUnits / 10000) : null
       ));
