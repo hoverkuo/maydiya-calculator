@@ -71,19 +71,19 @@
         <label><span>第二批可滾貨天數</span><input id="second-rollover-days" type="number" min="0" step="1" inputmode="numeric" value="14" required></label>
         <div><span id="total-orders-label">建議下單數</span><output id="total-orders" aria-labelledby="total-orders-label">—</output></div>
         <div><span id="total-actual-orders-label">實下單數</span><output id="total-actual-orders" aria-labelledby="total-actual-orders-label">—</output></div>
-        <div><span id="total-inbound-label">總承諾量</span><output id="total-inbound" aria-labelledby="total-inbound-label">—</output></div>
+        <div><span id="total-inbound-label">總開單量</span><output id="total-inbound" aria-labelledby="total-inbound-label">—</output></div>
         <label><span>實際銷售量</span><input id="actual-sales" type="number" min="0" step="1" inputmode="numeric"></label>
         <label><span>第一批滾退率（%）</span><input id="first-return-rate" type="number" min="0" max="100" step="0.01" value="20" required></label>
         <label><span>第二批滾退率（%）</span><input id="second-return-rate" type="number" min="0" max="100" step="0.01" value="15" required></label>
       </div>
       <div class="table-wrap" tabindex="0" role="region" aria-label="入庫批次">
         <table>
-          <thead><tr><th scope="col">入庫批次</th><th scope="col">入庫日</th><th scope="col">應入庫量</th><th scope="col">預估退貨數</th><th scope="col">10天內可到滾貨數</th><th scope="col">10-16天內可到滾貨數</th><th scope="col">建議下單數</th><th scope="col">實下單數</th></tr></thead>
+          <thead><tr><th scope="col">入庫批次</th><th scope="col">實際入庫日</th><th scope="col">實際入庫量</th><th scope="col">預估退貨數</th><th scope="col">10天內可到滾貨數</th><th scope="col">10-16天內可到滾貨數</th><th scope="col">建議下單數</th><th scope="col">實下單數</th></tr></thead>
           <tbody id="batches"></tbody>
         </table>
       </div>
       <button type="button" id="add-batch">新增預購批次</button>
-      <p>兩批可滾貨天數都從各來源的入庫日起算。修改第二批滾退率時，第一批會自動補足預估退貨率。建議下單數會扣除已達天數的兩批可供滾貨數。</p>
+      <p>兩批可滾貨天數都從各來源的實際入庫日起算。修改第二批滾退率時，第一批會自動補足預估退貨率。建議下單數會扣除已達天數的兩批可供滾貨數。</p>
       <p>兩批滾貨自動視為已使用，後續批次會扣除該段已使用的來源。</p>
     </form>
   </main>
@@ -151,14 +151,14 @@
       const date = document.createElement('input');
       date.type = 'date';
       date.className = 'date-input';
-      date.setAttribute('aria-label', name + '入庫日');
+      date.setAttribute('aria-label', name + '實際入庫日');
       row.insertCell().append(date);
       const quantity = document.createElement('input');
       quantity.type = 'number';
       quantity.min = '0';
       quantity.step = '1';
       quantity.inputMode = 'numeric';
-      quantity.setAttribute('aria-label', name + '應入庫量');
+      quantity.setAttribute('aria-label', name + '實際入庫量');
       row.insertCell().append(quantity);
       const [ownResult, previousResult, secondResult, orderResult] =
         ['預估退貨數', '10天內可到滾貨數', '10-16天內可到滾貨數', '建議下單數'].map(label => {
@@ -227,8 +227,8 @@
           : '預購' + chineseNumber(index - 1) + (row.date.value ? dateParts[1] + '/' + dateParts[2] : '月日');
         batchNames[index] = name;
         row.heading.textContent = (index + 1) + '. ' + name;
-        row.date.setAttribute('aria-label', (index + 1) + '. ' + name + '入庫日');
-        row.quantity.setAttribute('aria-label', (index + 1) + '. ' + name + '應入庫量');
+        row.date.setAttribute('aria-label', (index + 1) + '. ' + name + '實際入庫日');
+        row.quantity.setAttribute('aria-label', (index + 1) + '. ' + name + '實際入庫量');
         row.actualOrder.setAttribute('aria-label', (index + 1) + '. ' + name + '實下單數');
       });
       const dates = rows.map(row => row.date.valueAsNumber);
@@ -286,7 +286,7 @@
           secondCount = 0;
           secondResult.textContent = '0';
         } else if (!Number.isFinite(dates[index])) {
-          previousResult.textContent = date.validity.badInput ? '請確認本批入庫日' : '待填本批入庫日';
+          previousResult.textContent = date.validity.badInput ? '請確認本批實際入庫日' : '待填本批實際入庫日';
         } else if (!validRate) {
           previousResult.textContent = '請確認預估退貨率';
         } else if (!validRateSplit) {
@@ -314,10 +314,10 @@
           const incomplete = unused.find(({ source, count }) => !Number.isFinite(dates[source]) || count === null);
           const tooRecent = unused.find(({ source }) => (dates[index] - dates[source]) / day < waitingDays);
           if (incomplete) {
-            const field = Number.isFinite(dates[incomplete.source]) ? '應入庫量' : '入庫日';
+            const field = Number.isFinite(dates[incomplete.source]) ? '實際入庫量' : '實際入庫日';
             previousNote.textContent = '請確認「' + batchNames[incomplete.source] + '」的' + field;
           } else if (tooRecent) {
-            previousNote.textContent = '與「' + batchNames[tooRecent.source] + '」的入庫日相隔未滿 ' + waitingDays + ' 天';
+            previousNote.textContent = '與「' + batchNames[tooRecent.source] + '」的實際入庫日相隔未滿 ' + waitingDays + ' 天';
           } else if (earlier.some(({ source }) => usedSources.has(source))) {
             previousNote.textContent = '已扣除用過的前批滾貨';
           }
