@@ -233,9 +233,9 @@
       totalActualOrders.textContent = actualOrders.length
         ? show(actualOrders.reduce((sum, count) => sum + count, 0)) : '—';
       rows.forEach((row, index) => {
-        const dateParts = row.date.value.split('-');
+        const dateParts = row.plannedDate.value.split('-');
         const name = index < 2 ? batchNames[index]
-          : '預購' + chineseNumber(index - 1) + (row.date.value ? dateParts[1] + '/' + dateParts[2] : '月日');
+          : '預購' + chineseNumber(index - 1) + (row.plannedDate.value ? dateParts[1] + '/' + dateParts[2] : '月日');
         batchNames[index] = name;
         row.heading.textContent = (index + 1) + '. ' + name;
         row.plannedDate.setAttribute('aria-label', (index + 1) + '. ' + name + '原訂入庫日');
