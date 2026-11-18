@@ -491,7 +491,7 @@
           ? control.files[0]?.name || '' : control.tagName === 'INPUT' ? control.value : control.textContent];
       });
       const headers = ['入庫批次', '原訂入庫日', '開單量',
-        ...[...document.querySelectorAll('thead th')].slice(1).map(cell => cell.textContent)];
+        ...[...document.querySelectorAll('main thead th')].slice(1).map(cell => cell.textContent)];
       const batches = rows.map(row => [
         row.heading.textContent, row.plannedDate.value,
         row.bookedQuantity.value !== '' && row.bookedQuantity.validity.valid
