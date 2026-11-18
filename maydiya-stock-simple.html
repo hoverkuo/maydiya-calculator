@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>備貨滾貨計算器</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f3f7f7; color: #183940; font: 16px/1.5 Inter, "Microsoft JhengHei", sans-serif; }
+    main { max-width: 1280px; margin: 48px auto; padding: 0 20px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+    h1 { margin: 0; font-size: clamp(22px, 5vw, 32px); }
+    button { font: inherit; color: #164451; background: white; padding: 8px 14px; border: 1px solid #b8cdd0; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+    .panel { background: white; padding: clamp(12px, 3vw, 24px); border: 1px solid #dce7e8; border-radius: 14px; }
+    .summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .summary label, .summary > div { display: grid; gap: 6px; }
+    .summary span { font-weight: 700; }
+    input, .summary output { width: 100%; min-width: 0; min-height: 42px; padding: 8px 10px; font: inherit; color: inherit; border-radius: 7px; }
+    input { border: 1px solid #ddcba8; background: #fff6e1; }
+    .date-input { padding-inline: 5px; font-size: 13px; font-variant-numeric: tabular-nums; }
+    .date-input::-webkit-datetime-edit { padding: 0; }
+    .date-input::-webkit-calendar-picker-indicator { margin-inline-start: 2px; padding: 0; }
+    .summary output { background: #e9f2f3; font-weight: 700; }
+    .table-wrap { overflow-x: auto; scrollbar-width: none; }
+    .table-wrap::-webkit-scrollbar { display: none; }
+    table { width: 100%; min-width: 1140px; table-layout: fixed; border-collapse: collapse; }
+    thead th:nth-child(2) { width: 150px; }
+    th, td { padding: 9px; text-align: left; border-bottom: 1px solid #e2ebec; }
+    thead th { background: #d7e8eb; }
+    tbody th { font-weight: 500; }
+    .result { background: #e9f2f3; text-align: right; font-variant-numeric: tabular-nums; }
+    .result small { display: block; color: #435f64; font-size: 12px; }
+    .calculation { white-space: pre-line; overflow-wrap: anywhere; }
+    p { margin: 16px 0 0; color: #435f64; font-size: 14px; }
+    @media (max-width: 600px) {
+      main { margin: 24px auto; padding: 0 12px; }
+      .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .product-image { display: block; max-width: 180px; max-height: 140px; object-fit: contain; margin-top: 8px; }
+    .product-image[hidden] { display: none; }
+    #print-report { display: none; }
+    @media print {
+      @page { size: A4 landscape; margin: 10mm; }
+      body { background: white; }
+      main { display: none; }
+      #print-report { display: block; font-size: 9pt; }
+      #print-report h1 { font-size: 16pt; }
+      #print-report table { min-width: 0; width: 100%; table-layout: fixed; }
+      #print-report th, #print-report td { white-space: pre-line; overflow-wrap: anywhere; padding: 5px; border: 1px solid #ccc; vertical-align: top; }
+      #print-report tr { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>備貨滾貨計算器</h1>
+      <div class="actions"><button type="button" id="example">帶入範例</button><button type="button" id="export-excel">匯出 Excel</button><button type="button" id="export-pdf">匯出 PDF</button></div>
+    </header>
+    <form class="panel" autocomplete="off">
+      <div class="summary">
+        <label><span>品號</span><input id="product-code" type="text"></label>
+        <div><label><span>商品圖片</span><input id="product-image" type="file" accept="image/*"></label><img id="image-preview" class="product-image" alt="商品圖片預覽" hidden><small id="image-status" role="status"></small></div>
+        <div><span id="deadline-label">最近待入庫期限</span><output id="deadline" aria-labelledby="deadline-label">—</output></div>
+        <div><span id="gap-label">空單缺口</span><output id="gap" aria-labelledby="gap-label">—</output></div>
+        <label><span>預估退貨率（%）</span><input id="rate" type="number" min="0" max="100" step="0.01" value="35" required></label>
+        <label><span>判斷日期</span><input id="as-of" class="date-input" type="date" required></label>
+        <label><span>第一批可滾貨天數</span><input id="rollover-days" type="number" min="0" step="1" inputmode="numeric" value="10" required></label>
+        <label><span>第二批可滾貨天數</span><input id="second-rollover-days" type="number" min="0" step="1" inputmode="numeric" value="14" required></label>
+        <div><span id="total-orders-label">建議下單數</span><output id="total-orders" aria-labelledby="total-orders-label">—</output></div>
+        <div><span id="total-actual-orders-label">實下單數</span><output id="total-actual-orders" aria-labelledby="total-actual-orders-label">—</output></div>
+        <div><span id="total-inbound-label">總承諾量</span><output id="total-inbound" aria-labelledby="total-inbound-label">—</output></div>
+        <label><span>實際銷售量</span><input id="actual-sales" type="number" min="0" step="1" inputmode="numeric"></label>
+        <label><span>第一批滾退率（%）</span><input id="first-return-rate" type="number" min="0" max="100" step="0.01" value="20" required></label>
+        <label><span>第二批滾退率（%）</span><input id="second-return-rate" type="number" min="0" max="100" step="0.01" value="15" required></label>
+      </div>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="入庫批次">
+        <table>
+          <thead><tr><th scope="col">入庫批次</th><th scope="col">入庫日</th><th scope="col">應入庫量</th><th scope="col">預估退貨數</th><th scope="col">10天內可到滾貨數</th><th scope="col">10-16天內可到滾貨數</th><th scope="col">建議下單數</th><th scope="col">實下單數</th></tr></thead>
+          <tbody id="batches"></tbody>
+        </table>
+      </div>
+      <button type="button" id="add-batch">新增預購批次</button>
+      <p>兩批可滾貨天數都從各來源的入庫日起算。修改第二批滾退率時，第一批會自動補足預估退貨率。建議下單數會扣除已達天數的兩批可供滾貨數。</p>
+      <p>兩批滾貨自動視為已使用，後續批次會扣除該段已使用的來源。</p>
+    </form>
+  </main>
+  <section id="print-report"></section>
+  <script>
+    const form = document.querySelector('form');
+    const imageInput = document.querySelector('#product-image');
+    const imagePreview = document.querySelector('#image-preview');
+    const imageStatus = document.querySelector('#image-status');
+    let imageUrl = '';
+    imageInput.addEventListener('change', () => {
+      if (imageUrl) URL.revokeObjectURL(imageUrl);
+      imageUrl = '';
+      imagePreview.removeAttribute('src');
+      imagePreview.hidden = true;
+      imageStatus.textContent = '';
+      const file = imageInput.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        imageStatus.textContent = '請選擇圖片檔案';
+        imageInput.value = '';
+        return;
+      }
+      imageUrl = URL.createObjectURL(file);
+      imagePreview.src = imageUrl;
+      imagePreview.hidden = false;
+    });
+    imagePreview.addEventListener('error', () => {
+      imagePreview.hidden = true;
+      imageStatus.textContent = '圖片無法讀取，請重新選擇';
+    });
+    const asOf = document.querySelector('#as-of');
+    const rate = document.querySelector('#rate');
+    const firstReturnRate = document.querySelector('#first-return-rate');
+    const secondReturnRate = document.querySelector('#second-return-rate');
+    const rolloverDays = document.querySelector('#rollover-days');
+    const secondRolloverDays = document.querySelector('#second-rollover-days');
+    const deadline = document.querySelector('#deadline');
+    const totalOrders = document.querySelector('#total-orders');
+    const totalActualOrders = document.querySelector('#total-actual-orders');
+    const totalInbound = document.querySelector('#total-inbound');
+    const actualSales = document.querySelector('#actual-sales');
+    const gap = document.querySelector('#gap');
+    const batchNames = [];
+    function chineseNumber(number) {
+      const digits = '零一二三四五六七八九';
+      if (number < 10) return digits[number];
+      if (number < 100) {
+        const tens = Math.floor(number / 10);
+        return (tens === 1 ? '' : digits[tens]) + '十' + (number % 10 ? digits[number % 10] : '');
+      }
+      return [...String(number)].map(digit => digits[Number(digit)]).join('');
+    }
+    const body = document.querySelector('#batches');
+    const rows = [];
+    function addBatch() {
+      const index = rows.length;
+      const name = index === 0 ? '初備' : index === 1 ? '補備' : '預購' + chineseNumber(index - 1) + '月日';
+      batchNames.push(name);
+      const row = body.insertRow();
+      const heading = document.createElement('th');
+      heading.scope = 'row';
+      heading.textContent = (index + 1) + '. ' + name;
+      row.append(heading);
+      const date = document.createElement('input');
+      date.type = 'date';
+      date.className = 'date-input';
+      date.setAttribute('aria-label', name + '入庫日');
+      row.insertCell().append(date);
+      const quantity = document.createElement('input');
+      quantity.type = 'number';
+      quantity.min = '0';
+      quantity.step = '1';
+      quantity.inputMode = 'numeric';
+      quantity.setAttribute('aria-label', name + '應入庫量');
+      row.insertCell().append(quantity);
+      const [ownResult, previousResult, secondResult, orderResult] =
+        ['預估退貨數', '10天內可到滾貨數', '10-16天內可到滾貨數', '建議下單數'].map(label => {
+        const result = document.createElement('output');
+        result.setAttribute('aria-label', name + ' ' + label);
+        const cell = row.insertCell();
+        cell.className = 'result';
+        cell.append(result);
+        return result;
+      });
+      const previousNote = document.createElement('small');
+      const actualOrder = document.createElement('input');
+      actualOrder.type = 'number';
+      actualOrder.min = '0';
+      actualOrder.step = '1';
+      actualOrder.inputMode = 'numeric';
+      actualOrder.setAttribute('aria-label', (index + 1) + '. ' + name + '實下單數');
+      row.insertCell().append(actualOrder);
+      previousResult.after(previousNote);
+      const [ownDetail, firstDetail, secondDetail, orderDetail] =
+        [ownResult, previousResult, secondResult, orderResult].map(result => {
+          const detail = document.createElement('small');
+          detail.className = 'calculation';
+          result.after(detail);
+          return detail;
+        });
+      rows.push({
+        heading,
+        date, quantity, actualOrder, ownResult, previousResult, secondResult, orderResult,
+        ownDetail, firstDetail, secondDetail, orderDetail, previousNote
+      });
+    }
+    for (let index = 0; index < 3; index++) addBatch();
+    const today = new Intl.DateTimeFormat('sv-SE', {
+      timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit'
+    }).format(new Date());
+    const day = 86400000;
+    const format = new Intl.NumberFormat('zh-TW');
+    const show = number => format.format(number);
+
+    function describeRollover(sources, quantities, rateUnits, detail) {
+      let total = 0;
+      const counts = [];
+      const lines = sources.map(({ source }) => {
+        const quantity = quantities[source];
+        const count = Math.floor(quantity * rateUnits / 10000);
+        total += count;
+        counts.push(show(count));
+        return batchNames[source] + '：' + show(quantity) + ' × ' + show(rateUnits / 100) + '% → ' + show(count);
+      });
+      detail.textContent = lines.length
+        ? [...lines, counts.join(' ＋ ') + ' ＝ ' + show(total)].join('\n')
+        : '目前沒有到期且未使用的來源';
+      return total;
+    }
+
+    function update() {
+      const actualOrders = rows.map(({ actualOrder }) =>
+        actualOrder.validity.valid ? actualOrder.valueAsNumber : NaN
+      ).filter(Number.isFinite);
+      totalActualOrders.textContent = actualOrders.length
+        ? show(actualOrders.reduce((sum, count) => sum + count, 0)) : '—';
+      rows.forEach((row, index) => {
+        const dateParts = row.date.value.split('-');
+        const name = index < 2 ? batchNames[index]
+          : '預購' + chineseNumber(index - 1) + (row.date.value ? dateParts[1] + '/' + dateParts[2] : '月日');
+        batchNames[index] = name;
+        row.heading.textContent = (index + 1) + '. ' + name;
+        row.date.setAttribute('aria-label', (index + 1) + '. ' + name + '入庫日');
+        row.quantity.setAttribute('aria-label', (index + 1) + '. ' + name + '應入庫量');
+        row.actualOrder.setAttribute('aria-label', (index + 1) + '. ' + name + '實下單數');
+      });
+      const dates = rows.map(row => row.date.valueAsNumber);
+      const judgement = asOf.valueAsNumber;
+      const next = Math.min(...dates.filter(date => date > judgement));
+      deadline.textContent = Number.isFinite(next) ? new Date(next).toISOString().slice(0, 10).replaceAll('-', '/') : '—';
+
+      const rateUnits = Math.round(rate.valueAsNumber * 100);
+      const firstRateUnits = Math.round(firstReturnRate.valueAsNumber * 100);
+      const validRate = rate.validity.valid && Number.isFinite(rateUnits);
+      const validFirstRate = firstReturnRate.validity.valid && Number.isFinite(firstRateUnits);
+      const secondRateUnits = Math.round(secondReturnRate.valueAsNumber * 100);
+      const validRateSplit = validFirstRate && secondReturnRate.validity.valid
+        && firstRateUnits + secondRateUnits === rateUnits;
+      const waitingDays = rolloverDays.valueAsNumber;
+      const validWaitingDays = rolloverDays.validity.valid && Number.isSafeInteger(waitingDays);
+      const secondWaitingDays = secondRolloverDays.valueAsNumber;
+      const validSecondDays = secondRolloverDays.validity.valid && Number.isSafeInteger(secondWaitingDays)
+        && secondWaitingDays >= waitingDays;
+      const quantities = rows.map(({ quantity }) => quantity.validity.valid ? quantity.valueAsNumber : NaN);
+      const enteredQuantities = quantities.filter(Number.isFinite);
+      const inboundTotal = enteredQuantities.reduce((sum, quantity) => sum + quantity, 0);
+      totalInbound.textContent = enteredQuantities.length ? format.format(inboundTotal) : '—';
+      gap.textContent = enteredQuantities.length && actualSales.validity.valid && Number.isFinite(actualSales.valueAsNumber)
+        ? format.format(inboundTotal - actualSales.valueAsNumber) : '—';
+      const ownCounts = quantities.map(quantity => (
+        validRate && Number.isFinite(quantity) ? Math.floor(quantity * rateUnits / 10000) : null
+      ));
+      const usedSources = new Set();
+      const usedSecondSources = new Set();
+      let orderTotal = 0;
+      let hasOrder = false;
+      for (const [index, row] of rows.entries()) {
+        const {
+          date, ownResult, previousResult, secondResult, orderResult,
+          ownDetail, firstDetail, secondDetail, orderDetail, previousNote
+        } = row;
+        previousNote.textContent = '';
+        firstDetail.textContent = '';
+        secondDetail.textContent = '';
+        secondResult.textContent = '';
+        const orderQuantity = quantities[index];
+        let availableCount = NaN;
+        let secondCount = NaN;
+        const ownCount = ownCounts[index];
+        ownResult.textContent = ownCount === null ? '' : format.format(ownCount);
+        ownDetail.textContent = ownCount === null ? ''
+          : show(orderQuantity) + ' × ' + show(rateUnits / 100) + '% → ' + show(ownCount);
+        const earlier = rows.slice(0, index)
+          .map((row, source) => ({ row, source, count: ownCounts[source] }))
+          .filter(({ row }) => row.date.value || row.date.validity.badInput || row.quantity.value || row.quantity.validity.badInput);
+        if (index === 0) {
+          previousResult.textContent = '0';
+          availableCount = 0;
+          secondCount = 0;
+          secondResult.textContent = '0';
+        } else if (!Number.isFinite(dates[index])) {
+          previousResult.textContent = date.validity.badInput ? '請確認本批入庫日' : '待填本批入庫日';
+        } else if (!validRate) {
+          previousResult.textContent = '請確認預估退貨率';
+        } else if (!validRateSplit) {
+          previousResult.textContent = '請確認兩批滾退率';
+        } else if (!validWaitingDays) {
+          previousResult.textContent = '請確認可滾貨天數';
+        } else {
+          const unused = earlier.filter(({ source }) => !usedSources.has(source));
+          const available = unused.filter(({ source, count }) => (
+            count !== null && (dates[index] - dates[source]) / day >= waitingDays
+          ));
+          availableCount = describeRollover(available, quantities, firstRateUnits, firstDetail);
+          previousResult.textContent = format.format(availableCount);
+          if (validSecondDays) {
+            const secondAvailable = earlier.filter(({ source, count }) => (
+              count !== null && !usedSecondSources.has(source)
+              && (dates[index] - dates[source]) / day >= secondWaitingDays
+            ));
+            secondCount = describeRollover(secondAvailable, quantities, secondRateUnits, secondDetail);
+            secondResult.textContent = format.format(secondCount);
+            for (const { source } of secondAvailable) usedSecondSources.add(source);
+          } else {
+            secondResult.textContent = '請確認第二批天數';
+          }
+          const incomplete = unused.find(({ source, count }) => !Number.isFinite(dates[source]) || count === null);
+          const tooRecent = unused.find(({ source }) => (dates[index] - dates[source]) / day < waitingDays);
+          if (incomplete) {
+            const field = Number.isFinite(dates[incomplete.source]) ? '應入庫量' : '入庫日';
+            previousNote.textContent = '請確認「' + batchNames[incomplete.source] + '」的' + field;
+          } else if (tooRecent) {
+            previousNote.textContent = '與「' + batchNames[tooRecent.source] + '」的入庫日相隔未滿 ' + waitingDays + ' 天';
+          } else if (earlier.some(({ source }) => usedSources.has(source))) {
+            previousNote.textContent = '已扣除用過的前批滾貨';
+          }
+          for (const { source } of available) usedSources.add(source);
+        }
+        const orderCount = orderQuantity - availableCount - secondCount;
+        const hasOrderCount = Number.isFinite(orderCount);
+        orderResult.textContent = hasOrderCount ? format.format(orderCount) : '';
+        orderDetail.textContent = hasOrderCount
+          ? show(orderQuantity) + ' − ' + show(availableCount) + ' − ' + show(secondCount) + ' ＝ ' + show(orderCount) : '';
+        if (hasOrderCount) {
+          orderTotal += orderCount;
+          hasOrder = true;
+        }
+      }
+      totalOrders.textContent = hasOrder ? format.format(orderTotal) : '—';
+    }
+
+    form.addEventListener('submit', event => event.preventDefault());
+    function updateRateSplit(editedRate, otherRate) {
+      const totalUnits = Math.round(rate.valueAsNumber * 100);
+      const editedUnits = Math.round(editedRate.valueAsNumber * 100);
+      if (rate.validity.valid && editedRate.validity.valid && editedUnits <= totalUnits) {
+        otherRate.value = (totalUnits - editedUnits) / 100;
+      }
+    }
+
+    form.addEventListener('input', event => {
+      if (event.target === secondReturnRate) {
+        updateRateSplit(secondReturnRate, firstReturnRate);
+      } else if (event.target === rate || event.target === firstReturnRate) {
+        updateRateSplit(firstReturnRate, secondReturnRate);
+      }
+      update();
+    });
+    document.querySelector('#add-batch').addEventListener('click', () => {
+      addBatch();
+      update();
+      rows[rows.length - 1].date.focus();
+    });
+    document.querySelector('#example').addEventListener('click', () => {
+      asOf.value = '2026-11-17';
+      firstReturnRate.value = '20';
+      rate.value = '35';
+      secondReturnRate.value = '15';
+      const dates = ['2026-11-09', '2026-11-18', '2026-11-26', '2026-11-27', '2026-11-28', '2026-11-30'];
+      const quantities = [110, 207, 100, 150, 150, 100];
+      while (rows.length < dates.length) addBatch();
+      rows.forEach(({ date, quantity }, index) => {
+        date.value = dates[index] ?? '';
+        quantity.value = quantities[index] ?? '';
+      });
+      update();
+    });
+  function xmlText(value) {
+    return String(value).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '')
+      .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  }
+
+  // XLSX is a ZIP of XML parts. Store the small parts without compression for offline export.
+  function zipFiles(files) {
+    const encoder = new TextEncoder();
+    const records = [];
+    const directory = [];
+    let offset = 0;
+    let directorySize = 0;
+    for (const [name, content] of Object.entries(files)) {
+      const path = encoder.encode(name);
+      const bytes = encoder.encode(content);
+      let crc = 0xffffffff;
+      for (const byte of bytes) {
+        crc ^= byte;
+        for (let bit = 0; bit < 8; bit++) {
+          crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+        }
+      }
+      crc ^= 0xffffffff;
+
+      const local = new DataView(new ArrayBuffer(30));
+      local.setUint32(0, 0x04034b50, true);
+      local.setUint16(4, 20, true);
+      local.setUint16(12, 33, true); // ZIP's first representable DOS date.
+      local.setUint32(14, crc, true);
+      local.setUint32(18, bytes.length, true);
+      local.setUint32(22, bytes.length, true);
+      local.setUint16(26, path.length, true);
+      records.push(local.buffer, path, bytes);
+
+      const entry = new DataView(new ArrayBuffer(46));
+      entry.setUint32(0, 0x02014b50, true);
+      entry.setUint16(4, 20, true);
+      entry.setUint16(6, 20, true);
+      entry.setUint16(14, 33, true);
+      entry.setUint32(16, crc, true);
+      entry.setUint32(20, bytes.length, true);
+      entry.setUint32(24, bytes.length, true);
+      entry.setUint16(28, path.length, true);
+      entry.setUint32(42, offset, true);
+      directory.push(entry.buffer, path);
+      offset += 30 + path.length + bytes.length;
+      directorySize += 46 + path.length;
+    }
+    const end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true);
+    end.setUint16(8, directory.length / 2, true);
+    end.setUint16(10, directory.length / 2, true);
+    end.setUint32(12, directorySize, true);
+    end.setUint32(16, offset, true);
+    return new Blob([...records, ...directory, end.buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+  }
+
+  function createWorkbook(rows) {
+    const spreadsheet = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+    const relationships = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    const packageRelationships = 'http://schemas.openxmlformats.org/package/2006/relationships';
+    const contentTypes = 'application/vnd.openxmlformats-officedocument.spreadsheetml';
+    const sheetRows = [['備貨滾貨計算器'], ...rows].map((row, index) => {
+      const cells = row.map((value, column) => {
+        if (value === null || value === '') return '';
+        const address = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[column] + (index + 1);
+        return typeof value === 'number'
+          ? `<c r="${address}" s="1"><v>${value}</v></c>`
+          : `<c r="${address}" t="inlineStr"><is><t xml:space="preserve">${xmlText(value)}</t></is></c>`;
+      });
+      return `<row r="${index + 1}">${cells.join('')}</row>`;
+    });
+    return zipFiles({
+      '[Content_Types].xml': `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="${contentTypes}.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="${contentTypes}.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="${contentTypes}.styles+xml"/></Types>`,
+      '_rels/.rels': `<Relationships xmlns="${packageRelationships}"><Relationship Id="rId1" Type="${relationships}/officeDocument" Target="xl/workbook.xml"/></Relationships>`,
+      'xl/workbook.xml': `<workbook xmlns="${spreadsheet}" xmlns:r="${relationships}"><sheets><sheet name="備貨滾貨" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+      'xl/_rels/workbook.xml.rels': `<Relationships xmlns="${packageRelationships}"><Relationship Id="rId1" Type="${relationships}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${relationships}/styles" Target="styles.xml"/></Relationships>`,
+      'xl/styles.xml': `<styleSheet xmlns="${spreadsheet}"><fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"/><xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1" applyNumberFormat="1"><alignment wrapText="1" vertical="top"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`,
+      'xl/worksheets/sheet1.xml': `<worksheet xmlns="${spreadsheet}"><cols><col min="1" max="1" width="28" customWidth="1"/><col min="2" max="2" width="45" customWidth="1"/><col min="3" max="3" width="12" customWidth="1"/><col min="4" max="8" width="32" customWidth="1"/></cols><sheetData>${sheetRows.join('')}</sheetData></worksheet>`
+    });
+  }
+
+
+
+    function reportData() {
+      const summary = [...document.querySelectorAll('.summary > *')].map(field => {
+        const control = field.querySelector('input, output');
+        return [field.querySelector('span').textContent, control.type === 'file'
+          ? control.files[0]?.name || '' : control.tagName === 'INPUT' ? control.value : control.textContent];
+      });
+      const headers = [...document.querySelectorAll('thead th')].map(cell => cell.textContent);
+      const batches = rows.map(row => [...row.heading.parentElement.cells].map(cell => {
+        const input = cell.querySelector('input');
+        if (input) return input.type === 'number' && input.value !== '' && input.validity.valid
+          ? input.valueAsNumber : input.value;
+        return [...cell.childNodes].map(node => node.textContent).filter(Boolean).join('\n');
+      }));
+      return { summary, headers, batches };
+    }
+    document.querySelector('#export-excel').addEventListener('click', () => {
+      update();
+      const { summary, headers, batches } = reportData();
+      const blob = createWorkbook([...summary, [], headers, ...batches]);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = '備貨滾貨計算器.xlsx';
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+    function preparePrint() {
+      update();
+      const { summary, headers, batches } = reportData();
+      const report = document.querySelector('#print-report');
+      const title = document.createElement('h1');
+      title.textContent = '備貨滾貨計算器';
+      const settings = document.createElement('p');
+      settings.textContent = summary.map(([label, value]) => label + ' ' + value).join('　');
+      const table = document.createElement('table');
+      const head = table.createTHead().insertRow();
+      for (const label of headers) {
+        const cell = document.createElement('th');
+        cell.textContent = label;
+        head.append(cell);
+      }
+      const body = table.createTBody();
+      for (const values of batches) {
+        const row = body.insertRow();
+        for (const value of values) row.insertCell().textContent = value;
+      }
+      report.replaceChildren(title, settings, table);
+      if (imageUrl && !imagePreview.hidden) {
+        const image = imagePreview.cloneNode();
+        report.insertBefore(image, table);
+      }
+    }
+    window.addEventListener('beforeprint', preparePrint);
+    document.querySelector('#export-pdf').addEventListener('click', () => {
+      preparePrint();
+      window.print();
+    });
+
+    asOf.value = today;
+    update();
+  </script>
+</body>
+</html>
