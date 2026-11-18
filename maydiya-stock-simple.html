@@ -24,7 +24,12 @@
     .table-wrap { overflow-x: auto; scrollbar-width: none; }
     .table-wrap::-webkit-scrollbar { display: none; }
     table { width: 100%; min-width: 1140px; table-layout: fixed; border-collapse: collapse; }
-    thead th:nth-child(2), thead th:nth-child(4) { width: 150px; }
+    thead th:first-child { width: 220px; }
+    thead th:nth-child(2) { width: 150px; }
+    .batch-info { vertical-align: top; background: #f5f8f8; }
+    .batch-info strong { display: block; margin-bottom: 10px; }
+    .batch-info label { display: grid; gap: 3px; margin-top: 8px; font-size: 12px; color: #435f64; }
+    .batch-info input { font-size: 13px; }
     th, td { padding: 9px; text-align: left; border-bottom: 1px solid #e2ebec; }
     thead th { background: #d7e8eb; }
     tbody th { font-weight: 500; }
@@ -78,7 +83,7 @@
       </div>
       <div class="table-wrap" tabindex="0" role="region" aria-label="入庫批次">
         <table>
-          <thead><tr><th scope="col">入庫批次</th><th scope="col">原訂入庫日</th><th scope="col">開單量</th><th scope="col">實際入庫日</th><th scope="col">實際入庫量</th><th scope="col">預估退貨數</th><th scope="col">10天內可到滾貨數</th><th scope="col">10-16天內可到滾貨數</th><th scope="col">建議下單數</th><th scope="col">實下單數</th></tr></thead>
+          <thead><tr><th scope="col">入庫批次／原訂資料</th><th scope="col">實際入庫日</th><th scope="col">實際入庫量</th><th scope="col">預估退貨數</th><th scope="col">10天內可到滾貨數</th><th scope="col">10-16天內可到滾貨數</th><th scope="col">建議下單數</th><th scope="col">實下單數</th></tr></thead>
           <tbody id="batches"></tbody>
         </table>
       </div>
@@ -144,21 +149,28 @@
       const name = index === 0 ? '初備' : index === 1 ? '補備' : '預購' + chineseNumber(index - 1) + '月日';
       batchNames.push(name);
       const row = body.insertRow();
-      const heading = document.createElement('th');
-      heading.scope = 'row';
+      const info = document.createElement('th');
+      info.scope = 'row';
+      info.className = 'batch-info';
+      const heading = document.createElement('strong');
       heading.textContent = (index + 1) + '. ' + name;
-      row.append(heading);
+      info.append(heading);
+      row.append(info);
       const plannedDate = document.createElement('input');
       plannedDate.type = 'date';
       plannedDate.className = 'date-input';
       plannedDate.setAttribute('aria-label', (index + 1) + '. ' + name + '原訂入庫日');
-      row.insertCell().append(plannedDate);
+      const plannedLabel = document.createElement('label');
+      plannedLabel.append('原訂入庫日', plannedDate);
+      info.append(plannedLabel);
       const bookedQuantity = document.createElement('input');
       bookedQuantity.type = 'number';
       bookedQuantity.min = '0';
       bookedQuantity.step = '1';
       bookedQuantity.inputMode = 'numeric';
-      row.insertCell().append(bookedQuantity);
+      const bookedLabel = document.createElement('label');
+      bookedLabel.append('開單量', bookedQuantity);
+      info.append(bookedLabel);
       const date = document.createElement('input');
       date.type = 'date';
       date.className = 'date-input';
@@ -478,13 +490,18 @@
         return [field.querySelector('span').textContent, control.type === 'file'
           ? control.files[0]?.name || '' : control.tagName === 'INPUT' ? control.value : control.textContent];
       });
-      const headers = [...document.querySelectorAll('thead th')].map(cell => cell.textContent);
-      const batches = rows.map(row => [...row.heading.parentElement.cells].map(cell => {
+      const headers = ['入庫批次', '原訂入庫日', '開單量',
+        ...[...document.querySelectorAll('thead th')].slice(1).map(cell => cell.textContent)];
+      const batches = rows.map(row => [
+        row.heading.textContent, row.plannedDate.value,
+        row.bookedQuantity.value !== '' && row.bookedQuantity.validity.valid
+          ? row.bookedQuantity.valueAsNumber : row.bookedQuantity.value,
+        ...[...row.heading.closest('tr').cells].slice(1).map(cell => {
         const input = cell.querySelector('input');
         if (input) return input.type === 'number' && input.value !== '' && input.validity.valid
           ? input.valueAsNumber : input.value;
         return [...cell.childNodes].map(node => node.textContent).filter(Boolean).join('\n');
-      }));
+      })]);
       return { summary, headers, batches };
     }
     document.querySelector('#export-excel').addEventListener('click', () => {
