@@ -90,7 +90,7 @@
         </table>
       </div>
       <button type="button" id="add-batch">新增預購批次</button>
-      <p>兩批可滾貨天數都從各來源的實際入庫日起算。修改第二批滾退率時，第一批會自動補足預估退貨率。建議下單數會扣除已達天數的兩批可供滾貨數。</p>
+      <p>兩批可滾貨天數都從各來源的實際入庫日起算。修改第二批滾退率時，第一批會自動補足預估退貨率。建議下單數＝開單量－兩段已達天數的可供滾貨數。</p>
       <p>兩批滾貨自動視為已使用，後續批次會扣除該段已使用的來源。</p>
     </form>
   </main>
@@ -301,13 +301,13 @@
         firstDetail.textContent = '';
         secondDetail.textContent = '';
         secondResult.textContent = '';
-        const orderQuantity = quantities[index];
+        const orderQuantity = row.bookedQuantity.validity.valid ? row.bookedQuantity.valueAsNumber : NaN;
         let availableCount = NaN;
         let secondCount = NaN;
         const ownCount = ownCounts[index];
         ownResult.textContent = ownCount === null ? '' : format.format(ownCount);
         ownDetail.textContent = ownCount === null ? ''
-          : show(orderQuantity) + ' × ' + show(rateUnits / 100) + '% → ' + show(ownCount);
+          : show(quantities[index]) + ' × ' + show(rateUnits / 100) + '% → ' + show(ownCount);
         const earlier = rows.slice(0, index)
           .map((row, source) => ({ row, source, count: ownCounts[source] }))
           .filter(({ row }) => row.date.value || row.date.validity.badInput || row.quantity.value || row.quantity.validity.badInput);
