@@ -71,7 +71,8 @@
         <label><span>品號</span><input id="product-code" type="text"></label>
         <div><label><span>商品圖片</span><input id="product-image" type="file" accept="image/*"></label><img id="image-preview" class="product-image" alt="商品圖片預覽" hidden><small id="image-status" role="status"></small></div>
         <div><span id="deadline-label">最近待入庫期限</span><output id="deadline" aria-labelledby="deadline-label">—</output></div>
-        <div><span id="gap-label">空單缺口</span><output id="gap" aria-labelledby="gap-label">—</output></div>
+        <div><span id="gap-label">接單量空單缺口</span><output id="gap" aria-labelledby="gap-label">—</output></div>
+        <div><span id="live-gap-label">即時空單數</span><output id="live-gap" aria-labelledby="live-gap-label">—</output></div>
         <label><span>預估退貨率（%）</span><input id="rate" type="number" min="0" max="100" step="0.01" value="35" required></label>
         <label><span>判斷日期</span><input id="as-of" class="date-input" type="date" required></label>
         <label><span>第一批可滾貨天數</span><input id="rollover-days" type="number" min="0" step="1" inputmode="numeric" value="10" required></label>
@@ -134,6 +135,7 @@
     const totalInbound = document.querySelector('#total-inbound');
     const actualSales = document.querySelector('#actual-sales');
     const gap = document.querySelector('#gap');
+    const liveGap = document.querySelector('#live-gap');
     const batchNames = [];
     function chineseNumber(number) {
       const digits = '零一二三四五六七八九';
@@ -249,6 +251,8 @@
       ).filter(Number.isFinite);
       const actualOrderTotal = actualOrders.reduce((sum, count) => sum + count, 0);
       totalActualOrders.textContent = actualOrders.length ? show(actualOrderTotal) : '—';
+      liveGap.textContent = actualSales.validity.valid && Number.isFinite(actualSales.valueAsNumber)
+        ? show(actualSales.valueAsNumber - actualOrderTotal) : '—';
       rows.forEach((row, index) => {
         const dateParts = row.plannedDate.value.split('-');
         const name = index < 2 ? batchNames[index]
