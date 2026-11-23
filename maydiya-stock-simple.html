@@ -27,6 +27,10 @@
     thead th:first-child { width: 210px; }
     thead th:nth-child(2) { width: 150px; }
     .batch-info { vertical-align: top; background: #f5f8f8; }
+    .batch-info.received { background: #ffe5e5; color: #a51818; }
+    .batch-info.received label { color: #a51818; }
+    .batch-info.received input { background: #fff5f5; border-color: #e6aaaa; }
+    .inbound-status { display: block; margin-top: 5px; font-size: 11px; color: #a51818; }
     .batch-top { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
     .batch-info strong { flex: 1; min-width: 0; font-size: 12px; line-height: 1.35; }
     .batch-info label { display: grid; gap: 2px; font-size: 11px; color: #435f64; }
@@ -170,6 +174,9 @@
       const plannedLabel = document.createElement('label');
       plannedLabel.append('原訂入庫日', plannedDate);
       info.append(plannedLabel);
+      const inboundStatus = document.createElement('small');
+      inboundStatus.className = 'inbound-status';
+      info.append(inboundStatus);
       const bookedQuantity = document.createElement('input');
       bookedQuantity.type = 'number';
       bookedQuantity.min = '0';
@@ -216,7 +223,7 @@
           return detail;
         });
       rows.push({
-        heading,
+        heading, info, inboundStatus,
         date, plannedDate, bookedQuantity, quantity, actualOrder, ownResult, previousResult, secondResult, orderResult,
         ownDetail, firstDetail, secondDetail, orderDetail, previousNote
       });
@@ -287,6 +294,16 @@
         bookedQuantity.validity.valid ? bookedQuantity.valueAsNumber : NaN
       ).filter(Number.isFinite);
       const bookedTotal = bookedQuantities.reduce((sum, count) => sum + count, 0);
+      let unallocatedInbound = quantities.filter(Number.isFinite).reduce((sum, count) => sum + count, 0);
+      for (const { bookedQuantity, info, inboundStatus } of rows) {
+        const booked = bookedQuantity.validity.valid ? bookedQuantity.valueAsNumber : NaN;
+        const allocated = Number.isFinite(booked) && booked > 0 ? Math.min(booked, unallocatedInbound) : 0;
+        unallocatedInbound -= allocated;
+        info.classList.toggle('received', allocated > 0);
+        inboundStatus.textContent = allocated > 0
+          ? (allocated === booked ? '已完成入庫' : '已抵入部分入庫') + ' ' + show(allocated) + '／' + show(booked)
+          : '';
+      }
       totalInbound.textContent = bookedQuantities.length ? show(bookedTotal) : '—';
       gap.textContent = bookedQuantities.length ? show(bookedTotal - actualOrderTotal) : '—';
       const ownCounts = quantities.map(quantity => (
