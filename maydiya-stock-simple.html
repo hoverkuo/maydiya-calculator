@@ -185,6 +185,11 @@
       const bookedLabel = document.createElement('label');
       bookedLabel.append('開單量', bookedQuantity);
       top.append(bookedLabel);
+      const cumulativeLabel = document.createElement('label');
+      cumulativeLabel.textContent = '累計應入數';
+      const cumulativeBooked = document.createElement('output');
+      cumulativeLabel.append(cumulativeBooked);
+      info.append(cumulativeLabel);
       const date = document.createElement('input');
       date.type = 'date';
       date.className = 'date-input';
@@ -223,7 +228,7 @@
           return detail;
         });
       rows.push({
-        heading, info, inboundStatus,
+        heading, info, inboundStatus, cumulativeBooked,
         date, plannedDate, bookedQuantity, quantity, actualOrder, ownResult, previousResult, secondResult, orderResult,
         ownDetail, firstDetail, secondDetail, orderDetail, previousNote
       });
@@ -294,9 +299,16 @@
         bookedQuantity.validity.valid ? bookedQuantity.valueAsNumber : NaN
       ).filter(Number.isFinite);
       const bookedTotal = bookedQuantities.reduce((sum, count) => sum + count, 0);
+      let cumulativeBookedTotal = 0;
+      let hasBookedQuantity = false;
       let unallocatedInbound = quantities.filter(Number.isFinite).reduce((sum, count) => sum + count, 0);
-      for (const { bookedQuantity, info, inboundStatus } of rows) {
+      for (const { bookedQuantity, info, inboundStatus, cumulativeBooked } of rows) {
         const booked = bookedQuantity.validity.valid ? bookedQuantity.valueAsNumber : NaN;
+        if (Number.isFinite(booked)) {
+          cumulativeBookedTotal += booked;
+          hasBookedQuantity = true;
+        }
+        cumulativeBooked.textContent = hasBookedQuantity ? show(cumulativeBookedTotal) : '—';
         const allocated = Number.isFinite(booked) && booked > 0 ? Math.min(booked, unallocatedInbound) : 0;
         unallocatedInbound -= allocated;
         info.classList.toggle('received', allocated > 0);
@@ -516,12 +528,13 @@
         return [field.querySelector('span').textContent, control.type === 'file'
           ? control.files[0]?.name || '' : control.tagName === 'INPUT' ? control.value : control.textContent];
       });
-      const headers = ['入庫批次', '原訂入庫日', '開單量',
+      const headers = ['入庫批次', '原訂入庫日', '開單量', '累計應入數',
         ...[...document.querySelectorAll('main thead th')].slice(1).map(cell => cell.textContent)];
       const batches = rows.map(row => [
         row.heading.textContent, row.plannedDate.value,
         row.bookedQuantity.value !== '' && row.bookedQuantity.validity.valid
           ? row.bookedQuantity.valueAsNumber : row.bookedQuantity.value,
+        row.cumulativeBooked.textContent === '—' ? '' : Number(row.cumulativeBooked.textContent.replaceAll(',', '')),
         ...[...row.heading.closest('tr').cells].slice(1).map(cell => {
         const input = cell.querySelector('input');
         if (input) return input.type === 'number' && input.value !== '' && input.validity.valid
