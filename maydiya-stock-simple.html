@@ -322,18 +322,23 @@
       const bookedTotal = bookedQuantities.reduce((sum, count) => sum + count, 0);
       let cumulativeBookedTotal = 0;
       let hasBookedQuantity = false;
-      let unallocatedInbound = quantities.filter(Number.isFinite).reduce((sum, count) => sum + count, 0);
-      let cumulativeActualTotal = 0;
-      for (const [index, { bookedQuantity, info, inboundStatus, cumulativeBooked }] of rows.entries()) {
-        if (Number.isFinite(quantities[index])) cumulativeActualTotal += quantities[index];
+      for (const { plannedDate, bookedQuantity, info, inboundStatus, cumulativeBooked } of rows) {
+        const deadline = plannedDate.valueAsNumber;
+        const cumulativeActualTotal = quantities.reduce((sum, quantity, source) => {
+          const inboundDate = dates[source];
+          const onTime = Number.isFinite(inboundDate)
+            && (!Number.isFinite(deadline) || inboundDate <= deadline);
+          return sum + (Number.isFinite(quantity) && onTime ? quantity : 0);
+        }, 0);
+        const previousBookedTotal = cumulativeBookedTotal;
         const booked = bookedQuantity.validity.valid ? bookedQuantity.valueAsNumber : NaN;
         if (Number.isFinite(booked)) {
           cumulativeBookedTotal += booked;
           hasBookedQuantity = true;
         }
         cumulativeBooked.textContent = hasBookedQuantity ? show(cumulativeBookedTotal) : '—';
-        const allocated = Number.isFinite(booked) && booked > 0 ? Math.min(booked, unallocatedInbound) : 0;
-        unallocatedInbound -= allocated;
+        const allocated = Number.isFinite(booked) && booked > 0
+          ? Math.min(booked, Math.max(0, cumulativeActualTotal - previousBookedTotal)) : 0;
         info.classList.toggle('received', hasBookedQuantity && cumulativeBookedTotal > cumulativeActualTotal);
         inboundStatus.textContent = allocated > 0
           ? (allocated === booked ? '已完成入庫' : '已抵入部分入庫') + ' ' + show(allocated) + '／' + show(booked)
