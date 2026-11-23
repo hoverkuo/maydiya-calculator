@@ -90,7 +90,7 @@
       </div>
       <div class="table-wrap" tabindex="0" role="region" aria-label="入庫批次">
         <table>
-          <thead><tr><th scope="col">入庫批次／原訂資料</th><th scope="col">實際入庫日</th><th scope="col">實際入庫量</th><th scope="col">預估退貨數</th><th scope="col">10天內可到滾貨數</th><th scope="col">10-16天內可到滾貨數</th><th scope="col">建議下單數</th><th scope="col">實下單數</th></tr></thead>
+          <thead><tr><th scope="col">入庫批次／原訂資料</th><th scope="col">實際入庫日</th><th scope="col">實際入庫量</th><th scope="col">累計實入量</th><th scope="col">預估退貨數</th><th scope="col">10天內可到滾貨數</th><th scope="col">10-16天內可到滾貨數</th><th scope="col">建議下單數</th><th scope="col">實下單數</th></tr></thead>
           <tbody id="batches"></tbody>
         </table>
       </div>
@@ -202,6 +202,10 @@
       quantity.inputMode = 'numeric';
       quantity.setAttribute('aria-label', name + '實際入庫量');
       row.insertCell().append(quantity);
+      const cumulativeReceived = document.createElement('output');
+      const cumulativeReceivedCell = row.insertCell();
+      cumulativeReceivedCell.className = 'result';
+      cumulativeReceivedCell.append(cumulativeReceived);
       const [ownResult, previousResult, secondResult, orderResult] =
         ['預估退貨數', '10天內可到滾貨數', '10-16天內可到滾貨數', '建議下單數'].map(label => {
         const result = document.createElement('output');
@@ -228,7 +232,7 @@
           return detail;
         });
       rows.push({
-        heading, info, inboundStatus, cumulativeBooked,
+        heading, info, inboundStatus, cumulativeBooked, cumulativeReceived,
         date, plannedDate, bookedQuantity, quantity, actualOrder, ownResult, previousResult, secondResult, orderResult,
         ownDetail, firstDetail, secondDetail, orderDetail, previousNote
       });
@@ -295,6 +299,15 @@
       const validSecondDays = secondRolloverDays.validity.valid && Number.isSafeInteger(secondWaitingDays)
         && secondWaitingDays >= waitingDays;
       const quantities = rows.map(({ quantity }) => quantity.validity.valid ? quantity.valueAsNumber : NaN);
+      let receivedTotal = 0;
+      let hasReceivedQuantity = false;
+      rows.forEach((row, index) => {
+        if (Number.isFinite(quantities[index])) {
+          receivedTotal += quantities[index];
+          hasReceivedQuantity = true;
+        }
+        row.cumulativeReceived.textContent = hasReceivedQuantity ? show(receivedTotal) : '—';
+      });
       const bookedQuantities = rows.map(({ bookedQuantity }) =>
         bookedQuantity.validity.valid ? bookedQuantity.valueAsNumber : NaN
       ).filter(Number.isFinite);
