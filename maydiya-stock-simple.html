@@ -31,7 +31,11 @@
     .batch-info.received label { color: #a51818; }
     .batch-info.received input { background: #fff5f5; border-color: #e6aaaa; }
     .inbound-status { display: block; margin-top: 5px; font-size: 11px; color: #a51818; }
-    .batch-top { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+    .batch-top { display: flex; align-items: center; gap: 6px; min-height:52px; margin-bottom:0; }
+    .batch-info > label:first-of-type { min-height:50px; }
+    .actual-date-cell { vertical-align:top; padding-top:75.5px; }
+    .actual-date-cell > input { min-height:30px; padding:4px 5px; }
+    .cumulative-received { display:grid; gap:2px; margin-top:4px; font-size:11px; color:#435f64; }
     .batch-info strong { flex: 1; min-width: 0; font-size: 12px; line-height: 1.35; }
     .batch-info label { display: grid; gap: 2px; font-size: 11px; color: #435f64; }
     .batch-top label { width: 64px; flex-shrink: 0; }
@@ -90,7 +94,7 @@
       </div>
       <div class="table-wrap" tabindex="0" role="region" aria-label="入庫批次">
         <table>
-          <thead><tr><th scope="col">入庫批次／原訂資料</th><th scope="col">實際入庫日</th><th scope="col">實際入庫量</th><th scope="col">累計實入量</th><th scope="col">預估退貨數</th><th scope="col">10天內可到滾貨數</th><th scope="col">10-16天內可到滾貨數</th><th scope="col">建議下單數</th><th scope="col">實下單數</th></tr></thead>
+          <thead><tr><th scope="col">入庫批次／原訂資料</th><th scope="col">實際入庫日</th><th scope="col">實際入庫量</th><th scope="col">預估退貨數</th><th scope="col">10天內可到滾貨數</th><th scope="col">10-16天內可到滾貨數</th><th scope="col">建議下單數</th><th scope="col">實下單數</th></tr></thead>
           <tbody id="batches"></tbody>
         </table>
       </div>
@@ -190,11 +194,14 @@
       const cumulativeBooked = document.createElement('output');
       cumulativeLabel.append(cumulativeBooked);
       info.append(cumulativeLabel);
+      info.append(inboundStatus);
       const date = document.createElement('input');
       date.type = 'date';
       date.className = 'date-input';
       date.setAttribute('aria-label', name + '實際入庫日');
-      row.insertCell().append(date);
+      const dateCell = row.insertCell();
+      dateCell.className = 'actual-date-cell';
+      dateCell.append(date);
       const quantity = document.createElement('input');
       quantity.type = 'number';
       quantity.min = '0';
@@ -203,9 +210,10 @@
       quantity.setAttribute('aria-label', name + '實際入庫量');
       row.insertCell().append(quantity);
       const cumulativeReceived = document.createElement('output');
-      const cumulativeReceivedCell = row.insertCell();
-      cumulativeReceivedCell.className = 'result';
-      cumulativeReceivedCell.append(cumulativeReceived);
+      const cumulativeReceivedLabel = document.createElement('label');
+      cumulativeReceivedLabel.className = 'cumulative-received';
+      cumulativeReceivedLabel.append('累計實入量', cumulativeReceived);
+      dateCell.append(cumulativeReceivedLabel);
       const [ownResult, previousResult, secondResult, orderResult] =
         ['預估退貨數', '10天內可到滾貨數', '10-16天內可到滾貨數', '建議下單數'].map(label => {
         const result = document.createElement('output');
@@ -542,13 +550,16 @@
           ? control.files[0]?.name || '' : control.tagName === 'INPUT' ? control.value : control.textContent];
       });
       const headers = ['入庫批次', '原訂入庫日', '開單量', '累計應入數',
-        ...[...document.querySelectorAll('main thead th')].slice(1).map(cell => cell.textContent)];
+        '實際入庫日', '累計實入量',
+        ...[...document.querySelectorAll('main thead th')].slice(2).map(cell => cell.textContent)];
       const batches = rows.map(row => [
         row.heading.textContent, row.plannedDate.value,
         row.bookedQuantity.value !== '' && row.bookedQuantity.validity.valid
           ? row.bookedQuantity.valueAsNumber : row.bookedQuantity.value,
         row.cumulativeBooked.textContent === '—' ? '' : Number(row.cumulativeBooked.textContent.replaceAll(',', '')),
-        ...[...row.heading.closest('tr').cells].slice(1).map(cell => {
+        row.date.value,
+        row.cumulativeReceived.textContent === '—' ? '' : Number(row.cumulativeReceived.textContent.replaceAll(',', '')),
+        ...[...row.heading.closest('tr').cells].slice(2).map(cell => {
         const input = cell.querySelector('input');
         if (input) return input.type === 'number' && input.value !== '' && input.validity.valid
           ? input.valueAsNumber : input.value;
@@ -604,3 +615,4 @@
   </script>
 </body>
 </html>
+
