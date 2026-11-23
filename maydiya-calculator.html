@@ -1072,6 +1072,19 @@ h1 {
 
   function calculate(values = {}) {
     const errors = {};
+    values = { ...values };
+    for (const field of costFields.filter(field => /^(purchaseCost|materialsCost|metalCost)/.test(field))) {
+      if (!String(values[field + 'UnitPrice'] ?? '').trim()) continue;
+      const unitPrice = parseHundredths(values[field + 'UnitPrice'], field, errors);
+      const rawWeight = String(values[field + 'Weight'] ?? '').trim();
+      if (!/^\d+(?:\.\d{0,4})?$/.test(rawWeight)) {
+        errors[field] = '請輸入重量，最多四位小數。';
+        values[field] = '';
+        continue;
+      }
+      const weight = Number(rawWeight);
+      values[field] = unitPrice === null ? '' : (Math.round(unitPrice * weight) / 100).toFixed(2);
+    }
     const channel = values.channel === 'viva' ? channels.viva : channels.et;
     const deductionRate = channel.deductionRate;
     const amounts = Object.fromEntries(moneyFields.map(field => [
@@ -1140,7 +1153,10 @@ h1 {
     };
     const costRows = costFields.map(field => [
       costLabels[field],
-      field === 'shippingCost' && isViva ? shipping.label : values[field + 'Description'] || '',
+      field === 'shippingCost' && isViva ? shipping.label
+        : [values[field + 'Description'] || '',
+          values[field + 'UnitPrice'] ? '單價 ' + values[field + 'UnitPrice']
+            + ' × 重量 ' + (values[field + 'Weight'] || '未填') : ''].filter(Boolean).join('；'),
       values[field + 'Currency'] || 'TWD',
       result.costLines[field],
       inputValue(field)
@@ -1270,6 +1286,30 @@ h1 {
   if (typeof document === 'undefined') return;
 
   const form = document.getElementById('calculator');
+  const weightedFields = costFields.filter(field => /^(purchaseCost|materialsCost|metalCost)/.test(field));
+  for (const field of weightedFields) {
+    const cost = form.elements[field];
+    const controls = cost.closest('.cost-controls');
+    const factors = document.createElement('div');
+    factors.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px';
+    for (const [suffix, label] of [['UnitPrice', '單價'], ['Weight', '重量']]) {
+      const wrapper = document.createElement('label');
+      wrapper.textContent = label;
+      const input = document.createElement('input');
+      input.name = field + suffix;
+      input.inputMode = 'decimal';
+      input.placeholder = label === '重量' ? '重量（最多4位小數）' : '單價';
+      input.setAttribute('aria-label', cost.getAttribute('aria-label').replace('金額', label));
+      wrapper.append(input);
+      factors.append(wrapper);
+    }
+    controls.before(factors);
+    cost.placeholder = '成本';
+    cost.setAttribute('aria-label', cost.getAttribute('aria-label').replace('金額', '成本'));
+    const caption = document.createElement('small');
+    caption.textContent = '成本＝單價 × 重量，單價按所填重量單位計價';
+    controls.after(caption);
+  }
   const vivaShipping = document.getElementById('viva-shipping');
   const shippingMethod = form.elements.shippingMethod;
 
@@ -1358,6 +1398,18 @@ h1 {
   window.addEventListener('beforeprint', preparePrintReport);
 
   function render() {
+    for (const field of weightedFields) {
+      const price = form.elements[field + 'UnitPrice'].value.trim();
+      const weight = form.elements[field + 'Weight'].value.trim();
+      const cost = form.elements[field];
+      cost.readOnly = Boolean(price);
+      if (price) {
+        const errors = {};
+        const units = parseHundredths(price, field, errors);
+        cost.value = units !== null && /^\d+(?:\.\d{0,4})?$/.test(weight)
+          ? (Math.round(units * Number(weight)) / 100).toFixed(2) : '';
+      }
+    }
     const result = calculate(Object.fromEntries(new FormData(form)));
     document.getElementById('deduction-rate-label').textContent = `${result.deductionRate}%`;
     for (const field of inputFields) {
